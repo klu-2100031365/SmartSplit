@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+/* global font applied */
+:root {
+  font-family: var(--font-inter), sans-serif;
+}
