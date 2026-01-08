@@ -5,12 +5,12 @@ import { UserData, Currency } from '../types';
 import { CURRENCIES } from '../lib/constants';
 
 export const ThemeContext = createContext({ theme: 'light', toggleTheme: () => { } });
-export const CurrencyContext = createContext({ currency: 'INR' as Currency, setCurrency: (_c: Currency) => { }, symbol: '₹' });
+export const CurrencyContext = createContext({ currency: 'INR' as Currency, setCurrency: (_c: Currency) => { void _c; }, symbol: '₹' });
 export const AuthContext = createContext({
     user: null as UserData | null,
     guestName: null as string | null,
-    setGuestName: (_name: string | null) => { },
-    login: (_u: UserData, _t: string) => { },
+    setGuestName: (_name: string | null) => { void _name; },
+    login: (_u: UserData, _t: string) => { void _u; void _t; },
     logout: () => { },
     isAuthenticated: false
 });
@@ -25,9 +25,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         const savedUser = localStorage.getItem('user');
         if (savedUser) setUser(JSON.parse(savedUser));
 
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') {
+            setTheme(savedTheme);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             setTheme('dark');
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -47,8 +51,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         setGuestName(null);
     };
 
+    const toggleTheme = () => {
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+    };
+
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme: () => setTheme(theme === 'light' ? 'dark' : 'light') }}>
+        <ThemeContext.Provider value={{ theme, toggleTheme }}>
             <CurrencyContext.Provider value={{ currency, setCurrency, symbol: CURRENCIES[currency] }}>
                 <AuthContext.Provider value={{ user, guestName, setGuestName, login, logout, isAuthenticated: !!user }}>
                     {children}
