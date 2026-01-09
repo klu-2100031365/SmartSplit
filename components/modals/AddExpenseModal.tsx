@@ -74,7 +74,7 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
                 )}
                 <div className="grid grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"> Date </label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"> Date <span className="text-red-500">*</span> </label>
                         <input
                             type="date"
                             value={form.date}
@@ -83,7 +83,7 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
                         />
                     </div>
                     <Input
-                        label="Amount"
+                        label="Amount *"
                         type="number"
                         value={form.amount}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, amount: e.target.value })}
@@ -92,7 +92,7 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
                     />
                 </div>
                 <Input
-                    label="Description"
+                    label="Description *"
                     value={form.desc}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, desc: e.target.value })}
                     placeholder="e.g. Dinner at Taj"
@@ -112,7 +112,7 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
                     ]}
                 />
                 <Select
-                    label="Paid By"
+                    label="Paid By *"
                     value={form.paidBy}
                     onChange={(e) => setForm({ ...form, paidBy: e.target.value })}
                     options={[
