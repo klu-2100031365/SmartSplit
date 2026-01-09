@@ -34,8 +34,6 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
     const [isSavingPart, setIsSavingPart] = useState(false);
 
-    const [expForm, setExpForm] = useState({ desc: '', amount: '', category: 'Food', paidBy: '', date: '' });
-    const [selectedSplit, setSelectedSplit] = useState<string[]>([]);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
     const [formError, setFormError] = useState('');
     const [isSavingExp, setIsSavingExp] = useState(false);
@@ -49,12 +47,6 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
     };
 
     useEffect(refresh, [tripId]);
-
-    useEffect(() => {
-        if (showAddExp && !editingExpense) {
-            setExpForm(prev => ({ ...prev, date: new Date().toISOString().split('T')[0] }));
-        }
-    }, [showAddExp, editingExpense]);
 
     const settlementData = useMemo(() => {
         if (!data) return {
@@ -273,43 +265,18 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
     const handleEditExpense = (expense: Expense) => {
         if (!canEdit) return;
         setEditingExpense(expense);
-        setExpForm({
-            desc: expense.description,
-            amount: expense.amount.toString(),
-            category: expense.category,
-            paidBy: expense.paidBy,
-            date: expense.date.split('T')[0]
-        });
-        setSelectedSplit(expense.splitAmong || []);
         setShowAddExp(true);
     };
 
-    const handleAddExpense = async () => {
+    const handleAddExpense = async (expenseData: Omit<Expense, 'id' | 'tripId'>) => {
         setFormError('');
-        if (!expForm.paidBy || !expForm.amount || !expForm.desc) {
-            setFormError('Please fill all required fields.');
-            return;
-        }
-
         setIsSavingExp(true);
         try {
-            const expenseData = {
-                description: expForm.desc,
-                amount: parseFloat(expForm.amount),
-                date: expForm.date ? new Date(expForm.date).toISOString() : new Date().toISOString(),
-                category: expForm.category,
-                paidBy: expForm.paidBy,
-                splitAmong: selectedSplit.length > 0 ? selectedSplit : data.participants.map(p => p.id),
-                isPayment: false
-            };
-
             if (editingExpense) {
                 await api.updateExpense(tripId, editingExpense.id, expenseData, actor);
                 setEditingExpense(null);
             } else {
                 await api.addExpense(tripId, expenseData, actor);
-                setExpForm(prev => ({ ...prev, desc: '', amount: '' }));
-                setSelectedSplit([]);
             }
 
             setShowAddExp(false);
@@ -390,7 +357,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                     <Button variant="secondary" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingPart(null); setNewPartName(''); setShowAddPart(true); }} className="flex-1 md:flex-none py-4 px-6 text-lg">
                                         <Users size={20} /> Manage People
                                     </Button>
-                                    <Button onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingExpense(null); setExpForm({ desc: '', amount: '', category: 'Food', paidBy: '', date: '' }); setSelectedSplit([]); setShowAddExp(true); }} className="flex-1 md:flex-none py-4 px-6 text-lg">
+                                    <Button onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingExpense(null); setShowAddExp(true); }} className="flex-1 md:flex-none py-4 px-6 text-lg">
                                         <Plus size={20} /> Add Expense
                                     </Button>
                                 </>
@@ -410,8 +377,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                     <span className="font-bold text-base whitespace-nowrap"> {p.name} </span>
                                     {canEdit && (
                                         <button
-                                            onMouseDown={(e) => {
-                                                e.preventDefault();
+                                            onClick={(e) => {
                                                 e.stopPropagation();
                                                 setActiveMenuId(activeMenuId === p.id ? null : p.id);
                                             }}
@@ -425,16 +391,16 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                     activeMenuId === p.id && canEdit && (
                                         <div
                                             className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200"
-                                            onMouseDown={(e) => e.stopPropagation()}
+                                            onClick={(e) => e.stopPropagation()}
                                         >
                                             <button
-                                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleEditPart(p); setActiveMenuId(null); }}
+                                                onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); handleEditPart(p); }}
                                                 className="w-full text-left px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-750 flex items-center gap-3"
                                             >
                                                 <Edit2 size={16} /> Edit
                                             </button>
                                             <button
-                                                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleRemovePart(p.id); setActiveMenuId(null); }}
+                                                onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); handleRemovePart(p.id); }}
                                                 className="w-full text-left px-5 py-3 text-sm font-medium text-brand-orange hover:bg-brand-orange/10 flex items-center gap-3"
                                             >
                                                 <Trash2 size={16} /> Remove
