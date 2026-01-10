@@ -22,7 +22,7 @@ const Input = ({ label, error, leftElement, rightElement, className = '', ...pro
                 {...props}
                 className={`
                     w-full px-4 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl
-                    outline-none focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue transition-all text-gray-900 dark:text-white
+                    outline-none focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue transition-all text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500
                     ${leftElement ? 'pl-12' : ''} ${rightElement ? 'pr-12' : ''}
                 `}
             />
@@ -30,6 +30,7 @@ const Input = ({ label, error, leftElement, rightElement, className = '', ...pro
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
                     {rightElement}
                 </div>
+                
             )}
         </div>
         {error && <p className="text-xs text-brand-orange font-medium ml-1">{error}</p>}

@@ -717,7 +717,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPartName(e.target.value)}
                                 placeholder="Enter name"
                                 autoFocus
-                                className="w-full px-4 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue transition-all"
+                                className="w-full px-4 py-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue transition-all"
                             />
                         </div>
                         <Button onClick={handleAddParticipant} className="w-full py-4" isLoading={isSavingPart}> {editingPart ? "Update" : "Add"} Person </Button>
