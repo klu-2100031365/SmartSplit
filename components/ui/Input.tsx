@@ -30,7 +30,6 @@ const Input = ({ label, error, leftElement, rightElement, className = '', ...pro
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
                     {rightElement}
                 </div>
-                
             )}
         </div>
         {error && <p className="text-xs text-brand-orange font-medium ml-1">{error}</p>}
