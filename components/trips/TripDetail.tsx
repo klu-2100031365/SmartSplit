@@ -17,6 +17,7 @@ import BalanceCard from '../cards/BalanceCard';
 import ExpenseChart from '../charts/ExpenseChart';
 import BalanceChart from '../charts/BalanceChart';
 import Card from '../ui/Card';
+import Input from '../ui/Input';
 
 const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isSharedView?: boolean }) => {
     const { user, guestName } = useContext(AuthContext);
@@ -710,16 +711,14 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
             {canEdit && (
                 <Modal isOpen={showAddPart} onClose={() => setShowAddPart(false)} title={editingPart ? "Edit Participant" : "Add Participant"}>
                     <div className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1"> Name </label>
-                            <input
-                                value={newPartName}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPartName(e.target.value)}
-                                placeholder="Enter name"
-                                autoFocus
-                                className="w-full px-4 py-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue transition-all"
-                            />
-                        </div>
+                        <Input
+                            label="Name"
+                            value={newPartName}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPartName(e.target.value)}
+                            placeholder="Enter name"
+                            autoFocus
+                            required
+                        />
                         <Button onClick={handleAddParticipant} className="w-full py-4" isLoading={isSavingPart}> {editingPart ? "Update" : "Add"} Person </Button>
                     </div>
                 </Modal>

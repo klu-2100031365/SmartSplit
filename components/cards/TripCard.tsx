@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Plane, Trash2, ArrowRight } from 'lucide-react';
+import { Plane, Trash2, Edit2, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { TRIP_ICONS } from '../../lib/constants';
 import { formatDateWithDay } from '../../lib/formatters';
 import { Trip } from '../../types';
 
-const TripCard: React.FC<{ trip: Trip, onClick: () => void, onDelete?: () => void }> = ({ trip, onClick, onDelete }) => {
+const TripCard: React.FC<{ trip: Trip, onClick: () => void, onDelete?: () => void, onEdit?: () => void }> = ({ trip, onClick, onDelete, onEdit }) => {
     const [isAnimating, setIsAnimating] = useState(false);
 
     const handleClick = () => {
@@ -26,18 +26,32 @@ const TripCard: React.FC<{ trip: Trip, onClick: () => void, onDelete?: () => voi
             onClick={handleClick}
             className="relative bg-white dark:bg-gray-800 p-8 rounded-3xl border border-gray-100 dark:border-gray-700 hover:border-brand-blue dark:hover:border-brand-blue hover:shadow-2xl cursor-pointer transition-all flex justify-between items-center group h-40"
         >
-            {onDelete && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete();
-                    }}
-                    className="absolute top-3 right-3 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all z-20 opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                    title="Delete Trip"
-                >
-                    <Trash2 size={20} />
-                </button>
-            )}
+            <div className="absolute top-3 right-3 flex gap-1 z-20">
+                {onEdit && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit();
+                        }}
+                        className="p-2 text-gray-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-full transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                        title="Edit Trip"
+                    >
+                        <Edit2 size={18} />
+                    </button>
+                )}
+                {onDelete && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete();
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                        title="Delete Trip"
+                    >
+                        <Trash2 size={20} />
+                    </button>
+                )}
+            </div>
 
             <div className="relative z-10 flex justify-between items-center w-full">
                 <div>

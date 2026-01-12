@@ -37,7 +37,7 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
             setForm({
                 desc: '',
                 amount: '',
-                category: 'Food',
+                category: '',
                 paidBy: '',
                 date: new Date().toISOString().split('T')[0]
             });
@@ -47,7 +47,7 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
     }, [editingExpense, isOpen]);
 
     const handleSave = async () => {
-        if (!form.paidBy || !form.amount || !form.desc) {
+        if (!form.paidBy || !form.amount || !form.desc || !form.category) {
             setFormError('Please fill all required fields.');
             return;
         }
@@ -74,16 +74,17 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
                 )}
                 <div className="grid grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"> Date <span className="text-red-500">*</span> </label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"> Date <span className="text-red-500 ml-0.5">*</span> </label>
                         <input
                             type="date"
                             value={form.date}
+                            required
                             onChange={e => setForm({ ...form, date: e.target.value })}
-                            className="w-full px-4 py-4 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-base"
+                            className="w-full px-4 py-4 border border-gray-200 dark:border-gray-700 rounded-2xl outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-base dark:[color-scheme:dark]"
                         />
                     </div>
                     <Input
-                        label="Amount *"
+                        label="Amount"
                         type="number"
                         value={form.amount}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, amount: e.target.value })}
@@ -92,7 +93,7 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
                     />
                 </div>
                 <Input
-                    label="Description *"
+                    label="Description"
                     value={form.desc}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, desc: e.target.value })}
                     placeholder="e.g. Dinner at Taj"
@@ -102,7 +103,9 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
                     label="Category"
                     value={form.category}
                     onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    required
                     options={[
+                        { value: '', label: 'Select Category' },
                         { value: 'Food', label: 'Food' },
                         { value: 'Travel', label: 'Travel' },
                         { value: 'Rent', label: 'Rent' },
@@ -112,9 +115,10 @@ const AddExpenseModal = ({ isOpen, onClose, participants, editingExpense, onSave
                     ]}
                 />
                 <Select
-                    label="Paid By *"
+                    label="Paid By"
                     value={form.paidBy}
                     onChange={(e) => setForm({ ...form, paidBy: e.target.value })}
+                    required
                     options={[
                         { value: '', label: 'Select Payer' },
                         ...participants.map(p => ({ value: p.id, label: p.name }))
