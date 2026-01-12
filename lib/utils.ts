@@ -147,6 +147,16 @@ class MockBackend {
         return newTrip;
     }
 
+    async updateTrip(userId: string, tripId: string, name: string, icon: string, customImage?: string): Promise<void> {
+        await new Promise(r => setTimeout(r, 600));
+        const trips = this.get<Trip>('trips');
+        const idx = trips.findIndex(t => t.id === tripId && t.ownerId === userId);
+        if (idx !== -1) {
+            trips[idx] = { ...trips[idx], name, icon, customImage };
+            this.set('trips', trips);
+        }
+    }
+
     async getTripDetails(tripId: string) {
         const trips = this.get<Trip>('trips');
         const trip = trips.find(t => t.id === tripId);

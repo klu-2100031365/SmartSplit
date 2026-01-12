@@ -1,33 +1,44 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { TRIP_ICONS } from '../../lib/constants';
+import { Trip } from '../../types';
 
 interface AddTripModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (name: string, icon: string, customImage?: string) => Promise<void>;
+    editingTrip?: Trip | null;
 }
 
-const AddTripModal = ({ isOpen, onClose, onSave }: AddTripModalProps) => {
+const AddTripModal = ({ isOpen, onClose, onSave, editingTrip }: AddTripModalProps) => {
     const [name, setName] = useState('');
     const [selectedIcon, setSelectedIcon] = useState<string>('plane');
     const [customImage, setCustomImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (editingTrip) {
+            setName(editingTrip.name);
+            setSelectedIcon(editingTrip.icon || 'plane');
+            setCustomImage(editingTrip.customImage || null);
+        } else {
+            setName('');
+            setSelectedIcon('plane');
+            setCustomImage(null);
+        }
+    }, [editingTrip, isOpen]);
 
     const handleSave = async () => {
         if (!name) return;
         setIsLoading(true);
         try {
             await onSave(name, selectedIcon, customImage || undefined);
-            setName('');
-            setSelectedIcon('plane');
-            setCustomImage(null);
             onClose();
         } finally {
             setIsLoading(false);
@@ -48,7 +59,7 @@ const AddTripModal = ({ isOpen, onClose, onSave }: AddTripModalProps) => {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Create New Trip">
+        <Modal isOpen={isOpen} onClose={onClose} title={editingTrip ? "Edit Trip" : "Create New Trip"}>
             <div className="space-y-6">
                 <Input
                     label="Trip Name"
@@ -59,7 +70,7 @@ const AddTripModal = ({ isOpen, onClose, onSave }: AddTripModalProps) => {
                     required
                 />
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3"> Choose Icon or Upload Image </label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3"> Choose Icon or Upload Image <span className="text-red-500 ml-0.5">*</span> </label>
                     <div className="mb-4">
                         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl cursor-pointer bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors overflow-hidden relative">
                             {customImage ? (
@@ -99,7 +110,7 @@ const AddTripModal = ({ isOpen, onClose, onSave }: AddTripModalProps) => {
                         </div>
                     )}
                 </div>
-                <Button onClick={handleSave} className="w-full py-4 text-lg" isLoading={isLoading}> Create Trip </Button>
+                <Button onClick={handleSave} className="w-full py-4 text-lg" isLoading={isLoading}> {editingTrip ? "Save Changes" : "Create Trip"} </Button>
             </div>
         </Modal>
     );

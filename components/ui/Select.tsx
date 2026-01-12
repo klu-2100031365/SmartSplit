@@ -11,7 +11,11 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 
 const Select = ({ label, options, error, className = '', ...props }: SelectProps) => (
     <div className={`space-y-2 ${className}`}>
-        {label && <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">{label}</label>}
+        {label && (
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                {label} {props.required && <span className="text-red-500 ml-0.5">*</span>}
+            </label>
+        )}
         <div className="relative">
             <select
                 {...props}

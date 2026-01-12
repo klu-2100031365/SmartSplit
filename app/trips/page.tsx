@@ -16,6 +16,7 @@ const TripsList = () => {
     const router = useRouter();
     const [trips, setTrips] = useState<Trip[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
 
     const loadTrips = () => {
         if (user) api.getTrips(user.id).then(setTrips);
@@ -23,9 +24,14 @@ const TripsList = () => {
 
     useEffect(loadTrips, [user]);
 
-    const handleCreate = async (name: string, icon: string, image?: string) => {
+    const handleSaveTrip = async (name: string, icon: string, image?: string) => {
         if (!user) return;
-        await api.createTrip(user.id, name, icon, image);
+        if (editingTrip) {
+            await api.updateTrip(user.id, editingTrip.id, name, icon, image);
+        } else {
+            await api.createTrip(user.id, name, icon, image);
+        }
+        setEditingTrip(null);
         loadTrips();
     };
 
@@ -58,6 +64,10 @@ const TripsList = () => {
                             trip={trip}
                             onClick={() => router.push(`/trips/${trip.id}`)}
                             onDelete={() => handleDelete(trip.id)}
+                            onEdit={() => {
+                                setEditingTrip(trip);
+                                setIsModalOpen(true);
+                            }}
                         />
                     ))}
                     {trips.length === 0 && (
@@ -72,8 +82,12 @@ const TripsList = () => {
 
                 <AddTripModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={handleCreate}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingTrip(null);
+                    }}
+                    onSave={handleSaveTrip}
+                    editingTrip={editingTrip}
                 />
             </div>
         </ProtectedRoute>
