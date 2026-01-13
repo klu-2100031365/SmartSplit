@@ -2,13 +2,17 @@ import { UserData, Trip, Participant, Expense, ChangeLog, SharePermission, Settl
 
 export const generateId = () => Math.random().toString(36).substring(2, 15);
 
-export function calculateSettlements(participants: Participant[], expenses: Expense[]) {
+export function calculateSettlements(participants: Participant[], expenses: Expense[]): {
+    settlements: Settlement[],
+    stats: Record<string, { paid: number, share: number, received: number }>,
+    balances: Record<string, number>
+} {
     const balances: Record<string, number> = {};
-    const stats: Record<string, { paid: number, share: number }> = {};
+    const stats: Record<string, { paid: number, share: number, received: number }> = {};
 
     participants.forEach(p => {
         balances[p.id] = 0;
-        stats[p.id] = { paid: 0, share: 0 };
+        stats[p.id] = { paid: 0, share: 0, received: 0 };
     });
 
     expenses.forEach(exp => {
@@ -26,6 +30,7 @@ export function calculateSettlements(participants: Participant[], expenses: Expe
             }
             if (balances[receiver] !== undefined) {
                 balances[receiver] -= amount;
+                stats[receiver].received += amount;
             }
             return;
         }

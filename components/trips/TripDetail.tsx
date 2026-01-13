@@ -20,7 +20,7 @@ import BalanceChart from '../charts/BalanceChart';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 
-const PayerRow = ({ p, i, symbol, totalTripCost, shareAmount }: { p: any, i: number, symbol: string, totalTripCost: number, shareAmount: number }) => {
+const PayerRow = ({ p, i, symbol, totalTripCost, shareAmount }: { p: { id: string, name: string, amount: number, categories: [string, number][] }, i: number, symbol: string, totalTripCost: number, shareAmount: number }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
@@ -112,7 +112,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
     const settlementData = useMemo(() => {
         if (!data) return {
             settlements: [] as Settlement[],
-            stats: {} as Record<string, { paid: number, share: number }>,
+            stats: {} as Record<string, { paid: number, share: number, received: number }>,
             balances: {} as Record<string, number>
         };
         return calculateSettlements(data.participants, data.expenses);
@@ -170,7 +170,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
     const groupedExpenses = useMemo(() => {
         if (!data) return [];
         const groups: Record<string, Expense[]> = {};
-        data.expenses.forEach(exp => {
+        data.expenses.filter(e => !e.isPayment).forEach(exp => {
             const dateKey = exp.date ? exp.date.split('T')[0] : 'Unknown';
             if (!groups[dateKey]) groups[dateKey] = [];
             groups[dateKey].push(exp);
@@ -191,7 +191,6 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                 color: ['#4ADE80', '#60A5FA', '#FB923C', '#A78BFA', '#F472B6', '#FACC15'][data.participants.indexOf(p) % 6]
             };
         });
-
         const dStats = groupedExpenses.map(([date, exps]) => ({
             label: new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
             value: exps.filter(e => !e.isPayment).reduce((acc, curr) => acc + (curr.amount || 0), 0)
@@ -361,6 +360,17 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
         }
     };
 
+    const handleDeleteExpense = async (expenseId: string) => {
+        if (!confirm("Are you sure you want to delete this expense?")) return;
+        try {
+            await api.deleteExpense(tripId, expenseId, actor);
+            refresh();
+        } catch (e: unknown) {
+            const error = e as Error;
+            alert(error.message);
+        }
+    };
+
     const handleSettleUp = async (settlement: Settlement) => {
         if (!canEdit) return;
         const confirmMsg = `Record full payment of ${symbol}${formatAmount(settlement.amount)} from ${settlement.from} to ${settlement.to}?`;
@@ -396,7 +406,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
     };
 
     return (
-        <div className="p-6 md:p-10 max-w-[1600px] mx-auto pb-32 min-h-screen" onClick={() => setActiveMenuId(null)}>
+        <div className="p-4 sm:p-10 max-w-[1600px] mx-auto pb-32 min-h-screen" onClick={() => setActiveMenuId(null)}>
             <div className="mb-12">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                     <div>
@@ -414,28 +424,28 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                             <Users size={18} /> {data.participants.length} Participants • <Receipt size={18} /> {data.expenses.length} Expenses
                         </p>
                     </div>
-                    <div className="flex gap-4 w-full md:w-auto">
+                    <div className="flex flex-wrap gap-4 w-full md:w-auto">
                         {isOwner && (
-                            <>
-                                <Button variant="secondary" onClick={() => setShowLogModal(true)} className="flex-1 md:flex-none py-3 px-4 text-base">
+                            <div className="flex gap-2 flex-1 md:flex-none">
+                                <Button variant="secondary" onClick={() => setShowLogModal(true)} className="flex-1 md:flex-none py-2 px-3 sm:py-3 sm:px-4 text-sm sm:text-base">
                                     <Clock size={18} />
                                 </Button>
-                                <Button variant="secondary" onClick={() => setShowShareModal(true)} className="flex-1 md:flex-none py-3 px-4 text-base">
-                                    <Share2 size={18} /> Share
+                                <Button variant="secondary" onClick={() => setShowShareModal(true)} className="flex-1 md:flex-none py-2 px-3 sm:py-3 sm:px-4 text-sm sm:text-base">
+                                    <Share2 size={18} /> <span className="hidden xs:inline">Share</span>
                                 </Button>
-                            </>
+                            </div>
                         )}
 
                         {
                             canEdit && (
-                                <>
-                                    <Button variant="secondary" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingPart(null); setNewPartName(''); setShowAddPart(true); }} className="flex-1 md:flex-none py-3 px-5 text-base">
-                                        <Users size={18} /> Manage People
+                                <div className="flex gap-2 flex-1 md:flex-none">
+                                    <Button variant="secondary" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingPart(null); setNewPartName(''); setShowAddPart(true); }} className="flex-1 md:flex-none py-2 px-3 sm:py-3 sm:px-4 text-sm sm:text-base">
+                                        <Users size={16} /> <span className="hidden xs:inline">People</span>
                                     </Button>
-                                    <Button onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingExpense(null); setShowAddExp(true); }} className="flex-1 md:flex-none py-3 px-5 text-base">
-                                        <Plus size={18} /> Add Expense
+                                    <Button onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingExpense(null); setShowAddExp(true); }} className="flex-1 md:flex-none py-2 px-3 sm:py-3 sm:px-4 text-sm sm:text-base">
+                                        <Plus size={16} /> <span className="hidden xs:inline">Expense</span>
                                     </Button>
-                                </>
+                                </div>
                             )
                         }
                     </div>
@@ -489,13 +499,13 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700 inline-flex mb-10 shadow-sm w-full md:w-auto overflow-x-auto">
+            <div className="bg-white dark:bg-gray-800 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700 flex mb-10 shadow-sm w-full md:w-auto overflow-x-auto no-scrollbar whitespace-nowrap">
                 {
                     ['expenses', 'settlements', 'analytics'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as 'expenses' | 'settlements' | 'analytics')}
-                            className={`flex-1 md:flex-none px-6 md:px-10 py-2.5 rounded-xl font-mier font-bold text-sm transition-all whitespace-nowrap ${activeTab === tab
+                            className={`flex-1 md:flex-none px-6 md:px-10 py-2.5 rounded-xl font-mier font-bold text-sm transition-all shrink-0 ${activeTab === tab
                                 ? 'bg-brand-blue text-white shadow-md'
                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
@@ -513,7 +523,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                             data.expenses.length === 0 ? (
                                 <div className="text-center py-32 bg-white dark:bg-gray-800 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700">
                                     <Receipt size={64} className="mx-auto text-gray-300 dark:text-gray-600 mb-6" />
-                                    <p className="text-xl text-gray-500 dark:text-gray-400 font-medium"> No expenses yet. Tap "Add Expense" to start.</p>
+                                    <p className="text-xl text-gray-500 dark:text-gray-400 font-medium"> No expenses yet. Tap &quot;Add Expense&quot; to start.</p>
                                 </div>
                             ) : (
                                 groupedExpenses.map(([date, exps]) => {
@@ -540,6 +550,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                                             symbol={symbol}
                                                             canEdit={canEdit}
                                                             onEdit={handleEditExpense}
+                                                            onDelete={handleDeleteExpense}
                                                         />
                                                     ))
                                                 }
@@ -596,15 +607,19 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                                 {
                                                     data.participants.map(p => {
-                                                        const stats = settlementData.stats[p.id] || { paid: 0, share: 0 };
-                                                        const net = stats.paid - stats.share;
+                                                        const stats = settlementData.stats[p.id] || { paid: 0, share: 0, received: 0 };
+                                                        const net = stats.paid - stats.share - (stats.received || 0);
+                                                        const isPositive = net > 0.01;
+                                                        const isNegative = net < -0.01;
+                                                        const absNet = Math.abs(net);
+
                                                         return (
                                                             <tr key={p.id}>
                                                                 <td className="px-6 py-4 font-bold text-gray-900 dark:text-white"> {p.name} </td>
-                                                                <td className="px-6 py-4 text-right text-gray-600 dark:text-gray-400"> {symbol} {formatAmount(stats.paid)} </td>
-                                                                <td className="px-6 py-4 text-right text-gray-600 dark:text-gray-400"> {symbol} {formatAmount(stats.share)} </td>
-                                                                <td className={`px-6 py-4 text-right font-bold ${net >= 0 ? 'text-brand-green' : 'text-brand-orange'}`}>
-                                                                    {net >= 0 ? '+' : ''}{symbol} {formatAmount(Math.abs(net))}
+                                                                <td className="px-6 py-4 text-right text-gray-600 dark:text-gray-400 font-medium"> {symbol} {formatAmount(stats.paid)} </td>
+                                                                <td className="px-6 py-4 text-right text-gray-600 dark:text-gray-400 font-medium"> {symbol} {formatAmount(stats.share)} </td>
+                                                                <td className={`px-6 py-4 text-right font-bold ${isPositive ? 'text-brand-green' : isNegative ? 'text-brand-orange' : 'text-gray-400'}`}>
+                                                                    {isNegative ? '- ' : isPositive ? '+ ' : ''}{symbol} {formatAmount(absNet)}
                                                                 </td>
                                                             </tr>
                                                         );
@@ -767,7 +782,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                     <PieChart size={24} className="text-brand-purple" /> Category Breakdown
                                 </h3>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
                                     {analyticsData.categoryStats.length === 0 ? (
                                         <div className="col-span-full text-center py-10 text-gray-400">No category data available</div>
                                     ) : (
@@ -793,8 +808,11 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                                         {(() => {
                                                             const entries = Object.entries(cat.involved).sort((a, b) => b[1] - a[1]);
                                                             const maxAmount = entries.length > 0 ? entries[0][1] : 0;
+                                                            const topSpendersCount = entries.filter(e => e[1] === maxAmount).length;
+                                                            const hasUniqueTopSpender = maxAmount > 0 && topSpendersCount === 1;
+
                                                             return entries.map(([member, amount], idx) => {
-                                                                const isTopSpender = maxAmount > 0 && amount === maxAmount;
+                                                                const isTopSpender = hasUniqueTopSpender && amount === maxAmount;
                                                                 return (
                                                                     <div key={idx} className="flex items-center justify-between group">
                                                                         <div className="flex items-center gap-3">
@@ -834,7 +852,6 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
 
                                 <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-700 text-center">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] inline-flex items-center gap-2">
-                                        <Sparkles size={12} className="text-brand-blue" />
                                         Consumption shares are based on settlement strategy
                                     </p>
                                 </div>

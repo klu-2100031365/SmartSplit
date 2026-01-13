@@ -22,10 +22,10 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen">
-      <section className="bg-white dark:bg-gray-900 pt-32 pb-24 px-6 transition-colors relative overflow-hidden">
+      <section className="bg-white dark:bg-gray-900 pt-20 sm:pt-32 pb-16 sm:pb-24 px-6 transition-colors relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-blue/10 via-white to-white dark:from-brand-blue/5 dark:via-gray-900 dark:to-gray-900 pointer-events-none"></div>
         <div className="max-w-[1600px] mx-auto text-center relative z-10">
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-8 leading-tight text-gray-900 dark:text-white tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight text-gray-900 dark:text-white tracking-tight">
             Split Bills, <br /><span className="text-brand-green">Not Friendships.</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed font-light">

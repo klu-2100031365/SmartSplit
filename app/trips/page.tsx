@@ -46,13 +46,13 @@ const TripsList = () => {
 
     return (
         <ProtectedRoute>
-            <div className="p-8 max-w-[1600px] mx-auto min-h-screen">
-                <div className="flex justify-between items-center mb-10">
+            <div className="p-4 sm:p-8 max-w-[1600px] mx-auto min-h-screen">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10">
                     <div>
-                        <h1 className="text-4xl font-bold text-gray-900 dark:text-white"> My Trips </h1>
-                        <p className="text-gray-500 dark:text-gray-400 mt-2 text-lg"> Manage expenses for your travels.</p>
+                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white"> My Trips </h1>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2 text-base sm:text-lg"> Manage expenses for your travels.</p>
                     </div>
-                    <Button onClick={() => setIsModalOpen(true)} className="px-8 py-4">
+                    <Button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto px-8 py-4">
                         <Plus size={20} /> New Trip
                     </Button>
                 </div>

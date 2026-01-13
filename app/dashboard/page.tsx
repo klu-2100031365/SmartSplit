@@ -25,8 +25,8 @@ const Dashboard = () => {
 
     return (
         <ProtectedRoute>
-            <div className="p-8 max-w-[1600px] mx-auto space-y-12">
-                <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+            <div className="p-4 sm:p-8 max-w-[1600px] mx-auto space-y-8 sm:space-y-12">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
                     <div>
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3"> Hi, {user?.name} 👋</h1>
                         <p className="text-gray-500 dark:text-gray-400 text-lg"> Here&apos;s what&apos;s happening with your expenses.</p>
