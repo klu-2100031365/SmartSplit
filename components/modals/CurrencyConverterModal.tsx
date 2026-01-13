@@ -49,7 +49,7 @@ const CurrencyConverterModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
             <div className="bg-brand-blue/5 dark:bg-brand-blue/10 p-6 rounded-2xl text-center">
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Converted Amount</p>
                 <div className="text-4xl font-extrabold text-brand-blue">
-                    {CURRENCIES[to]} {result.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    {CURRENCIES[to]} {result.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })}
                 </div>
                 <p className="text-xs text-gray-400 mt-2">1 {from} = {(rates[to] / rates[from]).toFixed(4)} {to}</p>
             </div>

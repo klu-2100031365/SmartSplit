@@ -74,7 +74,7 @@ const TripsDemoModal = ({ isOpen, onClose }: TripsDemoModalProps) => {
     };
 
     // Auto-calculate equal shares
-    const equalShare = (parseFloat(amount || '0') / participants.length).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    const equalShare = (parseFloat(amount || '0') / participants.length).toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="SmartSplit Demo">
@@ -90,7 +90,7 @@ const TripsDemoModal = ({ isOpen, onClose }: TripsDemoModalProps) => {
                                 type="number"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
-                                className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-white bg-transparent border-none outline-none text-center w-full max-w-[200px] sm:max-w-[250px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="text-3xl sm:text-5xl font-black text-gray-900 dark:text-white bg-transparent border-none outline-none text-center w-full max-w-[200px] sm:max-w-[250px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="0"
                             />
                         </div>
@@ -168,7 +168,7 @@ const TripsDemoModal = ({ isOpen, onClose }: TripsDemoModalProps) => {
                             <Sparkles size={16} className="text-brand-blue" />
                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue">Smart Outcome</h4>
                         </div>
-                        <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">Optimized & Settled</h3>
+                        <h3 className="text-xl font-black text-gray-900 dark:text-white leading-tight">Optimized & Settled</h3>
                     </div>
 
                     {/* Intelligence Info */}
@@ -205,7 +205,7 @@ const TripsDemoModal = ({ isOpen, onClose }: TripsDemoModalProps) => {
                         </button>
                         {isAIExpanded && (
                             <div className="p-4 pt-0 text-xs text-gray-500 font-medium leading-relaxed animate-in slide-in-from-top-2 duration-300">
-                                "I've analyzed the ₹{parseFloat(amount || '0').toLocaleString()} total and calculated the most efficient settlement plan. By collapsing redundant group debts across {participants.length} members, I've ensured everyone pays their exact share with the fewest possible transfers."
+                                "I've analyzed the ₹{parseFloat(amount || '0').toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 })} total and calculated the most efficient settlement plan. By collapsing redundant group debts across {participants.length} members, I've ensured everyone pays their exact share with the fewest possible transfers."
                             </div>
                         )}
                     </div>
@@ -272,10 +272,10 @@ const TripsDemoModal = ({ isOpen, onClose }: TripsDemoModalProps) => {
                 <div className="text-center">
                     <Button
                         onClick={() => window.location.href = '/register'}
-                        className="w-full py-6 sm:py-7 text-sm font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-none rounded-2xl sm:rounded-[32px] shadow-2xl hover:scale-[1.01] transition-all flex items-center justify-center gap-3 group"
+                        className="w-full py-5 sm:py-6 text-sm font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-none rounded-2xl sm:rounded-[32px] shadow-2xl hover:scale-[1.01] transition-all flex items-center justify-center gap-3 group"
                     >
                         Create My Account
-                        <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                     </Button>
                 </div>
             </div>

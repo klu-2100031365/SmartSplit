@@ -28,18 +28,18 @@ const Dashboard = () => {
             <div className="p-8 max-w-[1600px] mx-auto space-y-12">
                 <div className="flex flex-col md:flex-row justify-between items-end gap-6">
                     <div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3"> Hi, {user?.name} 👋</h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-xl"> Here&apos;s what&apos;s happening with your expenses.</p>
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3"> Hi, {user?.name} 👋</h1>
+                        <p className="text-gray-500 dark:text-gray-400 text-lg"> Here&apos;s what&apos;s happening with your expenses.</p>
                     </div>
-                    <Button onClick={() => router.push('/profile')} className="px-8 py-4 text-lg"> View All Expenses </Button>
+                    <Button onClick={() => router.push('/profile')} className="px-6 py-3 text-base"> View All Expenses </Button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <Card className="bg-gradient-to-br from-brand-blue to-brand-green text-gray-900 dark:text-gray-900 border-none shadow-brand-blue/20">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-gray-800/80 font-bold mb-2 text-lg"> Total Expenses </p>
-                                <h3 className="text-5xl font-extrabold tracking-tight"> {symbol} {formatAmount(stats.totalTracked)} </h3>
+                                <p className="text-gray-800/80 font-bold mb-2 text-base"> Total Expenses </p>
+                                <h3 className="text-4xl font-extrabold tracking-tight"> {symbol} {formatAmount(stats.totalTracked)} </h3>
                             </div>
                             <div className="p-4 bg-white/30 rounded-2xl backdrop-blur-sm"> <PieChart size={32} className="text-gray-900" /> </div>
                         </div>
@@ -47,8 +47,8 @@ const Dashboard = () => {
                     <Card>
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-gray-500 dark:text-gray-400 font-bold mb-2 text-lg"> Active Trips </p>
-                                <h3 className="text-5xl font-bold text-gray-900 dark:text-white tracking-tight"> {stats.tripCount} </h3>
+                                <p className="text-gray-500 dark:text-gray-400 font-bold mb-2 text-base"> Active Trips </p>
+                                <h3 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight"> {stats.tripCount} </h3>
                             </div>
                             <div className="p-4 bg-brand-green/10 text-brand-green rounded-2xl"> <Users size={32} /></div>
                         </div>
@@ -56,8 +56,8 @@ const Dashboard = () => {
                     <Card>
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-gray-500 dark:text-gray-400 font-bold mb-2 text-lg"> Pending Settlements </p>
-                                <h3 className="text-5xl font-bold text-gray-900 dark:text-white tracking-tight"> --</h3>
+                                <p className="text-gray-500 dark:text-gray-400 font-bold mb-2 text-base"> Pending Settlements </p>
+                                <h3 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight"> --</h3>
                             </div>
                             <div className="p-4 bg-brand-orange/10 text-brand-orange rounded-2xl"> <Receipt size={32} /></div>
                         </div>
@@ -65,7 +65,7 @@ const Dashboard = () => {
                 </div>
 
                 <div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8"> Quick Access </h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8"> Quick Access </h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                         <ModuleCard
                             title="Trips"
