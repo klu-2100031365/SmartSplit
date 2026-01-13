@@ -20,33 +20,37 @@ import BalanceChart from '../charts/BalanceChart';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 
-const PayerRow = ({ p, i, symbol, totalTripCost }: { p: any, i: number, symbol: string, totalTripCost: number }) => {
+const PayerRow = ({ p, i, symbol, totalTripCost, shareAmount }: { p: any, i: number, symbol: string, totalTripCost: number, shareAmount: number }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
         <div className="bg-gray-50 dark:bg-gray-750/50 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300">
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                className="w-full flex items-center justify-start gap-140 p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
             >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 shrink-0">
                     <div className="w-10 h-10 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center font-bold">
                         {i + 1}
                     </div>
-                    <div>
-                        <span className="font-bold text-gray-900 dark:text-white text-lg"> {p.name} </span>
+                    <div className="min-w-[120px]">
+                        <span className="font-bold text-gray-900 dark:text-white text-base"> {p.name} </span>
                         <div className="flex items-center gap-1 mt-0.5">
                             <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
                                 <ChevronDown size={12} className="text-gray-400" />
                             </div>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight"> View Details </span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight"> Details </span>
                         </div>
                     </div>
                 </div>
-                <div className="text-right">
-                    <div className="font-bold text-gray-900 dark:text-white text-lg"> {symbol} {formatAmount(p.amount)} </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                        {totalTripCost > 0 ? Math.round((p.amount / totalTripCost) * 100) : 0}% of total
+                <div className="flex flex-col gap-0.5">
+                    <div className="text-sm font-bold text-brand-blue flex items-center gap-2">
+                        <span>Paid: {symbol}{formatAmount(p.amount)}</span>
+                        <span className="text-brand-orange text-[11px]">({totalTripCost > 0 ? ((p.amount / totalTripCost) * 100).toFixed(1) : 0}%)</span>
+                    </div>
+                    <div className="text-sm font-bold text-brand-green flex items-center gap-2">
+                        <span>Share: {symbol}{formatAmount(shareAmount)}</span>
+                        <span className="text-brand-orange text-[11px]">({totalTripCost > 0 ? ((shareAmount / totalTripCost) * 100).toFixed(1) : 0}%)</span>
                     </div>
                 </div>
             </button>
@@ -62,10 +66,10 @@ const PayerRow = ({ p, i, symbol, totalTripCost }: { p: any, i: number, symbol: 
                             </div>
                         ))}
                         <div className="pt-2 mt-2 border-t border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center gap-3 text-sm font-black text-brand-blue">
+                            <div className="flex items-center gap-3 text-sm font-black text-brand-orange">
                                 <span> = </span>
                                 <span> {symbol}{formatAmount(p.amount)} </span>
-                                <span className="text-xs uppercase tracking-widest px-2 py-0.5 bg-brand-blue/10 rounded"> Total </span>
+                                <span className="text-xs uppercase tracking-widest px-2 py-0.5 bg-brand-green/10 rounded"> Total </span>
                             </div>
                         </div>
                     </div>
@@ -397,7 +401,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                     <div>
                         <div className="flex items-center gap-3 mb-3">
-                            <h1 className="text-5xl font-bold text-gray-900 dark:text-white"> {data.trip.name} </h1>
+                            <h1 className="text-4xl font-bold text-gray-900 dark:text-white"> {data.trip.name} </h1>
                             {
                                 isSharedView && (
                                     <span className="px-3 py-1 bg-brand-orange/10 text-brand-orange text-sm font-bold rounded-lg border border-brand-orange/20">
@@ -406,18 +410,18 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                 )
                             }
                         </div>
-                        <p className="text-gray-500 dark:text-gray-400 flex items-center gap-3 text-lg">
-                            <Users size={20} /> {data.participants.length} Participants • <Receipt size={20} /> {data.expenses.length} Expenses
+                        <p className="text-gray-500 dark:text-gray-400 flex items-center gap-3 text-base">
+                            <Users size={18} /> {data.participants.length} Participants • <Receipt size={18} /> {data.expenses.length} Expenses
                         </p>
                     </div>
                     <div className="flex gap-4 w-full md:w-auto">
                         {isOwner && (
                             <>
-                                <Button variant="secondary" onClick={() => setShowLogModal(true)} className="flex-1 md:flex-none py-4 px-4 text-lg">
-                                    <Clock size={20} />
+                                <Button variant="secondary" onClick={() => setShowLogModal(true)} className="flex-1 md:flex-none py-3 px-4 text-base">
+                                    <Clock size={18} />
                                 </Button>
-                                <Button variant="secondary" onClick={() => setShowShareModal(true)} className="flex-1 md:flex-none py-4 px-4 text-lg">
-                                    <Share2 size={20} /> Share
+                                <Button variant="secondary" onClick={() => setShowShareModal(true)} className="flex-1 md:flex-none py-3 px-4 text-base">
+                                    <Share2 size={18} /> Share
                                 </Button>
                             </>
                         )}
@@ -425,11 +429,11 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                         {
                             canEdit && (
                                 <>
-                                    <Button variant="secondary" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingPart(null); setNewPartName(''); setShowAddPart(true); }} className="flex-1 md:flex-none py-4 px-6 text-lg">
-                                        <Users size={20} /> Manage People
+                                    <Button variant="secondary" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingPart(null); setNewPartName(''); setShowAddPart(true); }} className="flex-1 md:flex-none py-3 px-5 text-base">
+                                        <Users size={18} /> Manage People
                                     </Button>
-                                    <Button onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingExpense(null); setShowAddExp(true); }} className="flex-1 md:flex-none py-4 px-6 text-lg">
-                                        <Plus size={20} /> Add Expense
+                                    <Button onClick={(e: React.MouseEvent) => { e.stopPropagation(); setEditingExpense(null); setShowAddExp(true); }} className="flex-1 md:flex-none py-3 px-5 text-base">
+                                        <Plus size={18} /> Add Expense
                                     </Button>
                                 </>
                             )
@@ -442,10 +446,10 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                         data.participants.map(p => (
                             <div key={p.id} className="relative z-10 group">
                                 <div className="flex items-center gap-3 px-3 py-2 pr-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm hover:border-brand-blue transition-colors">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-blue to-brand-skyblue text-white flex items-center justify-center text-lg font-bold shadow-sm">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-skyblue text-white flex items-center justify-center text-sm font-bold shadow-sm">
                                         {p.name.charAt(0).toUpperCase()}
                                     </div>
-                                    <span className="font-bold text-base whitespace-nowrap"> {p.name} </span>
+                                    <span className="font-bold text-sm whitespace-nowrap"> {p.name} </span>
                                     {canEdit && (
                                         <button
                                             onClick={(e) => {
@@ -491,7 +495,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as 'expenses' | 'settlements' | 'analytics')}
-                            className={`flex-1 md:flex-none px-8 md:px-12 py-3.5 rounded-xl font-mier font-bold text-base transition-all whitespace-nowrap ${activeTab === tab
+                            className={`flex-1 md:flex-none px-6 md:px-10 py-2.5 rounded-xl font-mier font-bold text-sm transition-all whitespace-nowrap ${activeTab === tab
                                 ? 'bg-brand-blue text-white shadow-md'
                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
@@ -518,11 +522,11 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                         <div key={date}>
                                             <div className="flex items-center justify-between mb-6 px-3">
                                                 <div className="flex items-center gap-3">
-                                                    <Badge variant="secondary" className="px-4 py-1.5 text-base">
+                                                    <Badge variant="secondary" className="px-3 py-1.5 text-sm">
                                                         {formatDateWithDay(date)}
                                                     </Badge>
                                                 </div>
-                                                <div className="text-base font-bold text-gray-500 dark:text-gray-400">
+                                                <div className="text-sm font-bold text-gray-500 dark:text-gray-400">
                                                     Daily Total: <span className="text-gray-900 dark:text-white ml-2"> {symbol} {formatAmount(dayTotal)} </span>
                                                 </div>
                                             </div>
@@ -552,13 +556,13 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                     activeTab === 'settlements' && (
                         <div className="space-y-12">
                             <div>
-                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6"> Final Settlement Plan </h3>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6"> Final Settlement Plan </h3>
                                 <div className="space-y-5">
                                     {
                                         settlementData.settlements.length === 0 ? (
                                             <div className="flex flex-col items-center justify-center py-12 text-brand-green bg-brand-green/10 rounded-3xl border border-brand-green/20">
-                                                <CheckCircle size={56} className="mb-4" />
-                                                <p className="font-bold text-2xl"> All settled up! </p>
+                                                <CheckCircle size={48} className="mb-4" />
+                                                <p className="font-bold text-xl"> All settled up! </p>
                                             </div>
                                         ) : (
                                             settlementData.settlements.map((s, i) => (
@@ -578,9 +582,9 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6"> Spending Summary </h3>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6"> Spending Summary </h3>
                                     <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden overflow-x-auto">
-                                        <table className="w-full text-base text-left min-w-[500px]">
+                                        <table className="w-full text-sm text-left min-w-[500px]">
                                             <thead className="bg-gray-50 dark:bg-gray-750 border-b border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 font-bold">
                                                 <tr>
                                                     <th className="px-6 py-4"> Person </th>
@@ -612,7 +616,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                 </div>
 
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6"> Settled Payments </h3>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6"> Settled Payments </h3>
                                     <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                                         {
                                             data.expenses.filter(e => e.isPayment).length === 0 ? (
@@ -624,9 +628,9 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                                     <div key={pay.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm opacity-90 hover:opacity-100 transition-opacity gap-4">
                                                         <div className="flex items-center gap-4">
                                                             <div className="p-2 bg-brand-green/10 rounded-full text-brand-green shrink-0">
-                                                                <CheckCircle size={20} />
+                                                                <CheckCircle size={18} />
                                                             </div>
-                                                            <div className="text-base">
+                                                            <div className="text-sm">
                                                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                                                                     <span className="font-bold text-gray-900 dark:text-white"> {data.participants.find(p => p.id === pay.paidBy)?.name} </span>
                                                                     <ArrowRight size={14} className="text-gray-400" />
@@ -636,7 +640,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-0 border-gray-100 pt-3 sm:pt-0">
-                                                            <div className="font-bold text-gray-900 dark:text-white text-lg"> {symbol} {formatAmount(pay.amount || 0)}</div>
+                                                            <div className="font-bold text-gray-900 dark:text-white text-base"> {symbol} {formatAmount(pay.amount || 0)}</div>
                                                             {
                                                                 canEdit && (
                                                                     <button onClick={() => handleUndoSettlement(pay.id)} className="p-2 text-gray-400 hover:text-brand-orange hover:bg-brand-orange/10 rounded-lg transition-colors" title="Undo Payment">
@@ -656,9 +660,9 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                             <div>
                                 <button
                                     onClick={() => setShowDailyBreakdown(!showDailyBreakdown)}
-                                    className="flex items-center gap-2 text-brand-blue font-bold text-lg hover:underline py-2"
+                                    className="flex items-center gap-2 text-brand-blue font-bold text-base hover:underline py-2"
                                 >
-                                    {showDailyBreakdown ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    {showDailyBreakdown ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                     {showDailyBreakdown ? "Hide Daily Breakdown (Carry-forward)" : "View Daily Breakdown (Carry-forward)"}
                                 </button>
 
@@ -671,7 +675,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                                 ) : (
                                                     dailyBalances.map(({ date, balances }) => (
                                                         <div key={date} className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-                                                            <div className="font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-100 dark:border-gray-700 pb-3 text-lg">
+                                                            <div className="font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-100 dark:border-gray-700 pb-3 text-base">
                                                                 {formatDateWithDay(date)}
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-y-3 gap-x-6">
@@ -681,7 +685,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                                                         const pName = data.participants.find(p => p.id === pid)?.name || 'Unknown';
                                                                         if (Math.abs(val) < 0.01) return null;
                                                                         return (
-                                                                            <div key={pid} className="flex justify-between items-center text-base">
+                                                                            <div key={pid} className="flex justify-between items-center text-sm">
                                                                                 <span className="text-gray-600 dark:text-gray-300 font-medium"> {pName} </span>
                                                                                 <span className={`font-bold ${val >= 0 ? 'text-brand-green' : 'text-brand-orange'}`}>
                                                                                     {val >= 0 ? '+' : ''}{symbol} {formatAmount(Math.abs(val))}
@@ -707,37 +711,41 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                     activeTab === 'analytics' && (
                         <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-300">
                             <Card>
-                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-                                    <Wallet size={28} /> Total Trip Cost
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                                    <Wallet size={24} /> Total Paid (Upfront Payments)
                                 </h3>
                                 <div className="mb-8">
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1"> Total Spent </p>
-                                    <p className="text-5xl font-extrabold text-brand-blue mb-2"> {symbol} {formatAmount(analyticsData.totalTripCost)} </p>
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-blue/5 text-brand-blue rounded-full border border-brand-blue/10">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-blue animate-pulse" />
-                                        <p className="text-[10px] font-black uppercase tracking-widest"> Amount spent initially </p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1"> Total Paid  </p>
+                                    <p className="text-4xl font-extrabold text-brand-blue mb-2"> {symbol} {formatAmount(analyticsData.totalTripCost)} </p>
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-blue/5 text-brand-orange rounded-full border border-brand-blue/10">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest"> Amount spent initially/Onspot </p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
                                     {
-                                        analyticsData.totalPayerStats.map((p, i) => (
-                                            <PayerRow
-                                                key={i}
-                                                p={p}
-                                                i={i}
-                                                symbol={symbol}
-                                                totalTripCost={analyticsData.totalTripCost}
-                                            />
-                                        ))
+                                        analyticsData.totalPayerStats.map((p, i) => {
+                                            const shareStat = analyticsData.individualShareStats.find(s => s.participant.id === p.id);
+                                            return (
+                                                <PayerRow
+                                                    key={i}
+                                                    p={p}
+                                                    i={i}
+                                                    symbol={symbol}
+                                                    totalTripCost={analyticsData.totalTripCost}
+                                                    shareAmount={shareStat?.total || 0}
+                                                />
+                                            );
+                                        })
                                     }
                                 </div>
                             </Card>
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                 <Card className="flex flex-col">
-                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3">
-                                        <PieChart size={28} /> Spending Share (Consumption)
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3">
+                                        <PieChart size={24} /> Fair Share (After Split)
                                     </h3>
                                     <div className="flex-1 flex items-center justify-center">
                                         <ExpenseChart data={analyticsData.participantStats} symbol={symbol} totalAmount={analyticsData.totalTripCost} />
@@ -745,8 +753,8 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                 </Card>
 
                                 <Card className="flex flex-col">
-                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-3">
-                                        <BarChart3 size={28} /> Daily Trends
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-3">
+                                        <BarChart3 size={24} /> Daily Trends
                                     </h3>
                                     <div className="flex-1 flex items-end">
                                         <BalanceChart data={analyticsData.dailyStats} symbol={symbol} />
@@ -755,8 +763,8 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                             </div>
 
                             <Card className="mt-10">
-                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-10 flex items-center gap-3">
-                                    <PieChart size={28} className="text-brand-purple" /> Category Breakdown
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-10 flex items-center gap-3">
+                                    <PieChart size={24} className="text-brand-purple" /> Category Breakdown
                                 </h3>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -775,29 +783,48 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                                                 <CatIcon size={24} />
                                                             </div>
                                                             <div>
-                                                                <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1.5"> {cat.category} </p>
-                                                                <p className="text-xl font-black text-gray-900 dark:text-white leading-none"> {symbol}{formatAmount(cat.total)} </p>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1.5"> {cat.category} </p>
+                                                                <p className="text-lg font-black text-gray-900 dark:text-white leading-none"> {symbol}{formatAmount(cat.total)} </p>
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-4">
-                                                        {Object.entries(cat.involved).sort((a, b) => b[1] - a[1]).map(([member, amount], idx) => (
-                                                            <div key={idx} className="flex items-center justify-between group">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-[10px] font-black text-gray-500 border border-gray-200 dark:border-gray-700">
-                                                                        {member[0].toUpperCase()}
+                                                        {(() => {
+                                                            const entries = Object.entries(cat.involved).sort((a, b) => b[1] - a[1]);
+                                                            const maxAmount = entries.length > 0 ? entries[0][1] : 0;
+                                                            return entries.map(([member, amount], idx) => {
+                                                                const isTopSpender = maxAmount > 0 && amount === maxAmount;
+                                                                return (
+                                                                    <div key={idx} className="flex items-center justify-between group">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="relative">
+                                                                                <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-[10px] font-black text-gray-500 border border-gray-200 dark:border-gray-700">
+                                                                                    {member[0].toUpperCase()}
+                                                                                </div>
+                                                                                {isTopSpender && (
+                                                                                    <div className="absolute -top-1 -right-1 bg-brand-orange text-white rounded-full p-0.5 shadow-sm">
+                                                                                        <Sparkles size={8} fill="currentColor" />
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-brand-blue transition-colors truncate max-w-[120px]"> {member} </span>
+                                                                                {isTopSpender && (
+                                                                                    <span className="text-[9px] font-black text-brand-orange uppercase leading-none mt-0.5"> Top Spender </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <p className="text-sm font-black text-gray-900 dark:text-white leading-none"> {symbol}{formatAmount(amount)} </p>
+                                                                            <p className="text-xs font-bold text-gray-400 leading-none mt-1.5">
+                                                                                {cat.total > 0 ? ((amount / cat.total) * 100).toFixed(0) : 0}%
+                                                                            </p>
+                                                                        </div>
                                                                     </div>
-                                                                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-brand-blue transition-colors truncate max-w-[120px]"> {member} </span>
-                                                                </div>
-                                                                <div className="text-right">
-                                                                    <p className="text-sm font-black text-gray-900 dark:text-white leading-none"> {symbol}{formatAmount(amount)} </p>
-                                                                    <p className="text-xs font-bold text-gray-400 leading-none mt-1.5">
-                                                                        {cat.total > 0 ? ((amount / cat.total) * 100).toFixed(0) : 0}%
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
+                                                                );
+                                                            });
+                                                        })()}
                                                     </div>
                                                 </div>
                                             );
