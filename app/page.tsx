@@ -1,15 +1,18 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plane, Utensils, Film, Gamepad2, PiggyBank, TrendingUp, ArrowRight } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import TripsDemoModal from '../components/modals/TripsDemoModal';
 
 const LandingPage = () => {
   const router = useRouter();
-  const modules = [
-    { title: 'Trips', icon: Plane, desc: 'Split vacation costs seamlessly.', route: '/trips' },
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+
+  const modules: { title: string, icon: any, desc: string, route?: string, showDemo?: boolean }[] = [
+    { title: 'Trips', icon: Plane, desc: 'Split vacation costs seamlessly.', showDemo: true },
     { title: 'Restaurant', icon: Utensils, desc: 'Split the bill instantly.' },
     { title: 'Movies', icon: Film, desc: 'Share ticket prices.' },
     { title: 'Play Time', icon: Gamepad2, desc: 'Divide court rentals.' },
@@ -54,15 +57,26 @@ const LandingPage = () => {
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg leading-relaxed">{m.desc}</p>
               </div>
-              {m.route && (
-                <Button onClick={() => router.push(m.route)} className="w-full py-4 text-lg" variant="secondary">
-                  Launch App <ArrowRight size={20} />
+              {m.showDemo ? (
+                <Button onClick={() => setIsDemoModalOpen(true)} className="w-full py-4 text-lg" variant="secondary">
+                  Check Demo <ArrowRight size={20} />
                 </Button>
+              ) : (
+                m.route ? (
+                  <Button onClick={() => router.push(m.route!)} className="w-full py-4 text-lg" variant="secondary">
+                    Launch App <ArrowRight size={20} />
+                  </Button>
+                ) : null
               )}
             </Card>
           ))}
         </div>
       </section>
+
+      <TripsDemoModal
+        isOpen={isDemoModalOpen}
+        onClose={() => setIsDemoModalOpen(false)}
+      />
     </div>
   );
 };

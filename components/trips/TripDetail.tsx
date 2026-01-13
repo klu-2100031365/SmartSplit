@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useContext, useState, useEffect, useMemo } from 'react';
-import { Users, Receipt, Clock, Share2, Plus, MoreVertical, Edit2, Trash2, CheckCircle, ArrowRight, ChevronUp, ChevronDown, Wallet, PieChart, BarChart3 } from 'lucide-react';
+import { Users, Receipt, Clock, Share2, Plus, MoreVertical, Edit2, Trash2, CheckCircle, ArrowRight, ChevronUp, ChevronDown, Wallet, PieChart, BarChart3, Sparkles } from 'lucide-react';
 import { AuthContext, CurrencyContext } from '../../context/AppContext';
 import { api, calculateSettlements } from '../../lib/utils';
+import { getCategoryStyles } from '../../lib/constants';
 import { formatAmount, formatDateWithDay } from '../../lib/formatters';
 import { Trip, Participant, Expense, ChangeLog, Settlement, SharePermission } from '../../types';
 import Button from '../ui/Button';
@@ -18,6 +19,61 @@ import ExpenseChart from '../charts/ExpenseChart';
 import BalanceChart from '../charts/BalanceChart';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
+
+const PayerRow = ({ p, i, symbol, totalTripCost }: { p: any, i: number, symbol: string, totalTripCost: number }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    return (
+        <div className="bg-gray-50 dark:bg-gray-750/50 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300">
+            <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center font-bold">
+                        {i + 1}
+                    </div>
+                    <div>
+                        <span className="font-bold text-gray-900 dark:text-white text-lg"> {p.name} </span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                            <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                                <ChevronDown size={12} className="text-gray-400" />
+                            </div>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight"> View Details </span>
+                        </div>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <div className="font-bold text-gray-900 dark:text-white text-lg"> {symbol} {formatAmount(p.amount)} </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        {totalTripCost > 0 ? Math.round((p.amount / totalTripCost) * 100) : 0}% of total
+                    </div>
+                </div>
+            </button>
+
+            {isExpanded && (
+                <div className="px-14 pb-5 pt-2 animate-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-2 border-l-2 border-brand-blue/20 pl-4 py-1">
+                        {p.categories.map(([cat, amount]: [string, number], idx: number) => (
+                            <div key={idx} className="flex items-center gap-3 text-sm font-bold text-gray-500 dark:text-gray-400">
+                                <span className="text-gray-400"> {idx === 0 ? '' : '+'} </span>
+                                <span className="text-gray-900 dark:text-white"> {symbol}{formatAmount(amount)} </span>
+                                <span className="text-xs uppercase tracking-wider text-gray-400"> for {cat} </span>
+                            </div>
+                        ))}
+                        <div className="pt-2 mt-2 border-t border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-3 text-sm font-black text-brand-blue">
+                                <span> = </span>
+                                <span> {symbol}{formatAmount(p.amount)} </span>
+                                <span className="text-xs uppercase tracking-widest px-2 py-0.5 bg-brand-blue/10 rounded"> Total </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isSharedView?: boolean }) => {
     const { user, guestName } = useContext(AuthContext);
@@ -137,26 +193,40 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
             value: exps.filter(e => !e.isPayment).reduce((acc, curr) => acc + (curr.amount || 0), 0)
         })).reverse();
 
-        const cStats: Record<string, { total: number, payers: Record<string, number> }> = {};
+        const cStats: Record<string, { total: number, involved: Record<string, number> }> = {};
         data.expenses.filter(e => !e.isPayment).forEach(exp => {
-            if (!cStats[exp.category]) cStats[exp.category] = { total: 0, payers: {} };
+            if (!cStats[exp.category]) cStats[exp.category] = { total: 0, involved: {} };
             const amount = exp.amount || 0;
             cStats[exp.category].total += amount;
 
-            const payerName = data.participants.find(p => p.id === exp.paidBy)?.name || 'Unknown';
-            if (!cStats[exp.category].payers[payerName]) cStats[exp.category].payers[payerName] = 0;
-            cStats[exp.category].payers[payerName] += amount;
+            const splitAmong = exp.splitAmong || [];
+            const shareAmount = amount / Math.max(splitAmong.length, 1);
+
+            splitAmong.forEach(pid => {
+                const pName = data.participants.find(p => p.id === pid)?.name || 'Unknown';
+                if (!cStats[exp.category].involved[pName]) cStats[exp.category].involved[pName] = 0;
+                cStats[exp.category].involved[pName] += shareAmount;
+            });
         });
 
         const cStatsArray = Object.entries(cStats).map(([cat, stat]) => ({
             category: cat,
             total: stat.total,
-            payers: stat.payers
+            involved: stat.involved
         })).sort((a, b) => b.total - a.total);
 
         const totalPayerStats = data.participants.map(p => {
             const paid = settlementData.stats[p.id]?.paid || 0;
-            return { name: p.name, amount: paid };
+            const personCatBreakdown: Record<string, number> = {};
+            data.expenses.filter(e => !e.isPayment && e.paidBy === p.id).forEach(exp => {
+                personCatBreakdown[exp.category] = (personCatBreakdown[exp.category] || 0) + (exp.amount || 0);
+            });
+            return {
+                id: p.id,
+                name: p.name,
+                amount: paid,
+                categories: Object.entries(personCatBreakdown).sort((a, b) => b[1] - a[1])
+            };
         }).sort((a, b) => b.amount - a.amount);
 
         const shareStats: Record<string, { total: number, categories: Record<string, number> }> = {};
@@ -642,26 +712,23 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                 </h3>
                                 <div className="mb-8">
                                     <p className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-1"> Total Spent </p>
-                                    <p className="text-5xl font-extrabold text-brand-blue"> {symbol} {formatAmount(analyticsData.totalTripCost)} </p>
+                                    <p className="text-5xl font-extrabold text-brand-blue mb-2"> {symbol} {formatAmount(analyticsData.totalTripCost)} </p>
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-blue/5 text-brand-blue rounded-full border border-brand-blue/10">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-blue animate-pulse" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest"> Amount spent initially </p>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-4">
                                     {
                                         analyticsData.totalPayerStats.map((p, i) => (
-                                            <div key={i} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-750/50 rounded-2xl border border-gray-100 dark:border-gray-700">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center font-bold">
-                                                        {i + 1}
-                                                    </div>
-                                                    <span className="font-bold text-gray-900 dark:text-white text-lg"> {p.name} </span>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="font-bold text-gray-900 dark:text-white text-lg"> {symbol} {formatAmount(p.amount)} </div>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                                                        {analyticsData.totalTripCost > 0 ? Math.round((p.amount / analyticsData.totalTripCost) * 100) : 0}% of total
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <PayerRow
+                                                key={i}
+                                                p={p}
+                                                i={i}
+                                                symbol={symbol}
+                                                totalTripCost={analyticsData.totalTripCost}
+                                            />
                                         ))
                                     }
                                 </div>
@@ -686,6 +753,65 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                                     </div>
                                 </Card>
                             </div>
+
+                            <Card className="mt-10">
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-10 flex items-center gap-3">
+                                    <PieChart size={28} className="text-brand-purple" /> Category Breakdown
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                    {analyticsData.categoryStats.length === 0 ? (
+                                        <div className="col-span-full text-center py-10 text-gray-400">No category data available</div>
+                                    ) : (
+                                        analyticsData.categoryStats.map((cat, i) => {
+                                            const styles = getCategoryStyles(cat.category);
+                                            const CatIcon = styles.icon;
+
+                                            return (
+                                                <div key={i} className="space-y-6">
+                                                    <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`p-2.5 rounded-xl ${styles.bg} ${styles.color}`}>
+                                                                <CatIcon size={24} />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 leading-none mb-1.5"> {cat.category} </p>
+                                                                <p className="text-xl font-black text-gray-900 dark:text-white leading-none"> {symbol}{formatAmount(cat.total)} </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        {Object.entries(cat.involved).sort((a, b) => b[1] - a[1]).map(([member, amount], idx) => (
+                                                            <div key={idx} className="flex items-center justify-between group">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-[10px] font-black text-gray-500 border border-gray-200 dark:border-gray-700">
+                                                                        {member[0].toUpperCase()}
+                                                                    </div>
+                                                                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-brand-blue transition-colors truncate max-w-[120px]"> {member} </span>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="text-sm font-black text-gray-900 dark:text-white leading-none"> {symbol}{formatAmount(amount)} </p>
+                                                                    <p className="text-xs font-bold text-gray-400 leading-none mt-1.5">
+                                                                        {cat.total > 0 ? ((amount / cat.total) * 100).toFixed(0) : 0}%
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+
+                                <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-700 text-center">
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] inline-flex items-center gap-2">
+                                        <Sparkles size={12} className="text-brand-blue" />
+                                        Consumption shares are based on settlement strategy
+                                    </p>
+                                </div>
+                            </Card>
                         </div>
                     )
                 }
