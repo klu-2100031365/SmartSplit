@@ -22,7 +22,7 @@ const Navbar = () => {
     return (
         <>
             <nav className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 transition-colors">
-                <div className="max-w-[1600px] mx-auto px-6 h-20 flex justify-between items-center">
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 sm:h-20 flex justify-between items-center">
                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => user ? router.push('/dashboard') : router.push('/')}>
                         <SmartSplitLogo />
                         <span className="font-bold text-2xl tracking-tight text-gray-900 dark:text-white hidden sm:block">SmartSplit</span>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Edit2 } from 'lucide-react';
+import { Edit2, Trash2 } from 'lucide-react';
 import { CATEGORY_STYLES } from '../../lib/constants';
 import { formatAmount } from '../../lib/formatters';
 import Badge from '../ui/Badge';
@@ -13,9 +13,10 @@ interface ExpenseCardProps {
     symbol: string;
     canEdit: boolean;
     onEdit: (expense: Expense) => void;
+    onDelete: (expenseId: string) => void;
 }
 
-const ExpenseCard = ({ expense, participants, symbol, canEdit, onEdit }: ExpenseCardProps) => {
+const ExpenseCard = ({ expense, participants, symbol, canEdit, onEdit, onDelete }: ExpenseCardProps) => {
     const style = CATEGORY_STYLES[expense.category] || CATEGORY_STYLES['Others'];
     const Icon = style.icon;
     const splitAmong = expense.splitAmong || [];
@@ -44,15 +45,20 @@ const ExpenseCard = ({ expense, participants, symbol, canEdit, onEdit }: Expense
                     </div>
                 </div>
             </div>
-            <div className="flex items-center justify-between w-full sm:auto gap-5 ml-auto sm:ml-0 pl-16 sm:pl-0">
+            <div className="flex items-center justify-between w-full sm:auto gap-3 ml-auto sm:ml-0 pl-16 sm:pl-0">
                 <div className={`font-bold text-xl ${expense.isPayment ? 'text-brand-green' : 'text-gray-900 dark:text-white'}`}>
                     {symbol} {formatAmount(expense.amount || 0)}
                 </div>
                 {
                     canEdit && (
-                        <button onClick={() => onEdit(expense)} className="p-2.5 text-gray-400 hover:text-brand-blue hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all">
-                            <Edit2 size={18} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => onEdit(expense)} className="p-2.5 text-gray-400 hover:text-brand-blue hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all">
+                                <Edit2 size={18} />
+                            </button>
+                            <button onClick={() => onDelete(expense.id)} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all">
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
                     )
                 }
             </div>
