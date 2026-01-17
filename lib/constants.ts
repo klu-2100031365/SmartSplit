@@ -1,4 +1,4 @@
-import { Plane, Utensils, Film, Gamepad2, PiggyBank, TrendingUp, Car, Home, Pizza, Coffee, HelpCircle, ShoppingBag } from 'lucide-react';
+import { Plane, Utensils, Film, Gamepad2, PiggyBank, TrendingUp, Car, Home, Pizza, Coffee, HelpCircle, ShoppingBag, Wallet } from 'lucide-react';
 import { Currency } from '../types';
 
 export const CURRENCIES: Record<Currency, string> = {
@@ -15,7 +15,8 @@ export const TRIP_ICONS = {
     film: Film,
     gamepad: Gamepad2,
     piggy: PiggyBank,
-    trending: TrendingUp
+    trending: TrendingUp,
+    wallet: Wallet
 };
 
 export const CATEGORY_STYLES: Record<string, { icon: React.ElementType, bg: string, color: string }> = {

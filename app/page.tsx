@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plane, Utensils, Film, Gamepad2, PiggyBank, TrendingUp, ArrowRight } from 'lucide-react';
+import { Plane, Utensils, Film, Gamepad2, PiggyBank, TrendingUp, ArrowRight, Wallet } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import TripsDemoModal from '../components/modals/TripsDemoModal';
@@ -13,6 +13,7 @@ const LandingPage = () => {
 
   const modules: { title: string, icon: any, desc: string, route?: string, showDemo?: boolean }[] = [
     { title: 'Trips', icon: Plane, desc: 'Split vacation costs seamlessly.', showDemo: true },
+    { title: 'Daily Expense', icon: Wallet, desc: 'Track your personal day-to-day spending.', route: '/dashboard' },
     { title: 'Restaurant', icon: Utensils, desc: 'Split the bill instantly.' },
     { title: 'Movies', icon: Film, desc: 'Share ticket prices.' },
     { title: 'Play Time', icon: Gamepad2, desc: 'Divide court rentals.' },
