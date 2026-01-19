@@ -1,24 +1,92 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Plane, Utensils, Film, Gamepad2, PiggyBank, TrendingUp, ArrowRight, Wallet } from 'lucide-react';
-import Button from '../components/ui/Button';
+import {
+  Plane,
+  Utensils,
+  TrendingUp,
+  Wallet,
+  Bot,
+  Zap,
+  BarChart3,
+  Globe,
+  Receipt,
+  Film,
+  Gamepad2
+} from 'lucide-react';
 import Card from '../components/ui/Card';
-import TripsDemoModal from '../components/modals/TripsDemoModal';
 
 const LandingPage = () => {
   const router = useRouter();
-  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
 
-  const modules: { title: string, icon: any, desc: string, route?: string, showDemo?: boolean }[] = [
-    { title: 'Trips', icon: Plane, desc: 'Split vacation costs seamlessly.', showDemo: true },
-    { title: 'Daily Expense', icon: Wallet, desc: 'Track your personal day-to-day spending.', route: '/dashboard' },
-    { title: 'Restaurant', icon: Utensils, desc: 'Split the bill instantly.' },
-    { title: 'Movies', icon: Film, desc: 'Share ticket prices.' },
-    { title: 'Play Time', icon: Gamepad2, desc: 'Divide court rentals.' },
-    { title: 'Chit Funds', icon: PiggyBank, desc: 'Manage group savings.' },
-    { title: 'SIP', icon: TrendingUp, desc: 'Track shared investments.' },
+  const useCases = [
+    {
+      title: 'Trips',
+      icon: Plane,
+      desc: 'The ultimate travel expense manager for groups.',
+      features: [
+        'Smart Settlements (Who pays whom)',
+        'AI Assistant for quick entry',
+        'Detailed Category Analytics',
+        'Multi-currency support'
+      ]
+    },
+    {
+      title: 'Daily Expense',
+      icon: Wallet,
+      desc: 'Master your personal finances day by day.',
+      features: [
+        'AI Chatbot for tracking',
+        'Monthly Budgeting',
+        'Day-wise spending trends',
+        'Expense Insights'
+      ]
+    },
+    {
+      title: 'Restaurant',
+      icon: Utensils,
+      desc: 'Dine out without the math headache.',
+      features: [
+        'Receipt Scanning',
+        'Itemized Splitting',
+        'Tax & Tip Calculation',
+        'Instant Share Generation'
+      ]
+    },
+    {
+      title: 'Entertainment',
+      icon: Film,
+      desc: 'Movies, concerts, and fun times.',
+      features: [
+        'Quick Ticket Splitting',
+        'Group Booking Management',
+        'Settlement Reminders',
+        'Event History'
+      ]
+    },
+    {
+      title: 'Sports & Play',
+      icon: Gamepad2,
+      desc: 'Turf bookings and equipment sharing.',
+      features: [
+        'Court Rental Division',
+        'Recurring Games',
+        'Equipment Cost Sharing',
+        'Team Settlements'
+      ]
+    },
+    {
+      title: 'Shared Investments',
+      icon: TrendingUp,
+      desc: 'Track SIPs and group savings goals.',
+      features: [
+        'Goal Progress Tracking',
+        'Contribution History',
+        'Growth Projections',
+        'Automated Reminders'
+      ]
+    }
   ];
 
   return (
@@ -34,50 +102,42 @@ const LandingPage = () => {
             Settling up has never been this easy.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <Button onClick={() => router.push('/register')} variant="success" className="px-10 py-4 text-lg text-white shadow-xl shadow-brand-green/30">
+            <button onClick={() => router.push('/register')} className="px-10 py-4 text-lg font-bold text-white bg-brand-green rounded-full shadow-xl shadow-brand-green/30 hover:bg-brand-green/90 transition-all hover:-translate-y-1">
               Get Started Free
-            </Button>
-            <Button onClick={() => router.push('/login')} variant="ghost" className="text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 px-10 py-4 text-lg">
+            </button>
+            <button onClick={() => router.push('/login')} className="px-10 py-4 text-lg font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 rounded-full transition-all">
               Login
-            </Button>
+            </button>
           </div>
         </div>
       </section>
 
       <section className="py-24 px-6 max-w-[1600px] mx-auto">
         <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-16 text-center">Everything you need</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {modules.map((m, i) => (
-            <Card key={i} className="hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group border border-gray-100 dark:border-gray-700 h-full flex flex-col justify-between p-6">
-              <div>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3.5 bg-brand-blue/10 text-brand-blue rounded-2xl group-hover:bg-brand-blue group-hover:text-white transition-colors duration-300">
-                    <m.icon size={28} />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{m.title}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {useCases.map((item, i) => (
+            <Card key={i} className="hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 h-full flex flex-col p-8 bg-white dark:bg-gray-800 rounded-[32px]">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 bg-brand-blue/10 text-brand-blue rounded-2xl">
+                  <item.icon size={24} />
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-8 text-base leading-relaxed">{m.desc}</p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{item.title}</h3>
               </div>
-              {m.showDemo ? (
-                <Button onClick={() => setIsDemoModalOpen(true)} className="w-full py-3 text-base" variant="secondary">
-                  Check Demo <ArrowRight size={18} />
-                </Button>
-              ) : (
-                m.route ? (
-                  <Button onClick={() => router.push(m.route!)} className="w-full py-3 text-base" variant="secondary">
-                    Launch App <ArrowRight size={18} />
-                  </Button>
-                ) : null
-              )}
+
+              <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed h-[50px]">{item.desc}</p>
+
+              <div className="space-y-3 mt-auto">
+                {item.features.map((feat, idx) => (
+                  <div key={idx} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl">
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand-green flex-shrink-0" />
+                    <span className="font-medium">{feat}</span>
+                  </div>
+                ))}
+              </div>
             </Card>
           ))}
         </div>
       </section>
-
-      <TripsDemoModal
-        isOpen={isDemoModalOpen}
-        onClose={() => setIsDemoModalOpen(false)}
-      />
     </div>
   );
 };
