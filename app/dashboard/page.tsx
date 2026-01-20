@@ -77,7 +77,7 @@ const Dashboard = () => {
                             title="Daily Expense"
                             desc="Track personal spending"
                             icon={Wallet}
-                            onClick={() => router.push('/dashboard')}
+                            onClick={() => router.push('/daily-expenses')}
                         />
                         {
                             ['Dining', 'Movies', 'Play'].map((item, i) => (
