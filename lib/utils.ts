@@ -1,4 +1,4 @@
-import { UserData, Trip, Participant, Expense, ChangeLog, SharePermission, Settlement } from '../types';
+import { UserData, Trip, Participant, Expense, ChangeLog, SharePermission, Settlement, DailyExpense, DailyCategory } from '../types';
 
 export const generateId = () => Math.random().toString(36).substring(2, 15);
 
@@ -106,7 +106,7 @@ class MockBackend {
         users.push(newUser);
         this.set('users', users);
 
-        return { user: { id: newUser.id, name, email }, token: 'mock-token' };
+        return { user: { id: newUser.id, name, email, monthlySalary: undefined }, token: 'mock-token' };
     }
 
     async login(email: string, pass: string): Promise<{ user: UserData, token: string }> {
@@ -116,7 +116,7 @@ class MockBackend {
 
         if (!user) throw new Error("Invalid credentials.");
 
-        return { user: { id: user.id, name: user.name, email: user.email }, token: 'mock-token' };
+        return { user: { id: user.id, name: user.name, email: user.email, monthlySalary: user.monthlySalary }, token: 'mock-token' };
     }
 
     async getTrips(userId: string): Promise<Trip[]> {
@@ -327,6 +327,176 @@ class MockBackend {
             .map(e => ({ ...e, tripName: trips.find(t => t.id === e.tripId)?.name }));
 
         return { trips, expenses };
+    }
+
+    // Daily Expenses
+    async getDailyExpenses(userId: string): Promise<DailyExpense[]> {
+        const expenses = this.get<DailyExpense>('daily_expenses');
+        return expenses.filter(e => e.userId === userId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    async addDailyExpense(userId: string, expense: Omit<DailyExpense, 'id' | 'userId'>): Promise<DailyExpense> {
+        await new Promise(r => setTimeout(r, 400));
+        const expenses = this.get<DailyExpense>('daily_expenses');
+        const newExpense = { ...expense, id: generateId(), userId };
+        expenses.push(newExpense);
+        this.set('daily_expenses', expenses);
+        return newExpense;
+    }
+
+    async updateDailyExpense(userId: string, expenseId: string, data: Partial<DailyExpense>): Promise<void> {
+        const expenses = this.get<DailyExpense>('daily_expenses');
+        const idx = expenses.findIndex(e => e.id === expenseId && e.userId === userId);
+        if (idx !== -1) {
+            expenses[idx] = { ...expenses[idx], ...data };
+            this.set('daily_expenses', expenses);
+        }
+    }
+
+    async deleteDailyExpense(userId: string, expenseId: string): Promise<void> {
+        const expenses = this.get<DailyExpense>('daily_expenses');
+        this.set('daily_expenses', expenses.filter(e => !(e.id === expenseId && e.userId === userId)));
+    }
+
+    // Daily Categories
+    async getDailyCategories(userId: string): Promise<DailyCategory[]> {
+        const categories = this.get<DailyCategory>('daily_categories');
+        const defaults: DailyCategory[] = [
+            { id: '1', userId: 'system', name: 'Food & Dining', icon: 'Pizza', color: 'orange', isCustom: false },
+            { id: '2', userId: 'system', name: 'Transport', icon: 'Car', color: 'blue', isCustom: false },
+            { id: '3', userId: 'system', name: 'Bills & Utilities', icon: 'Zap', color: 'yellow', isCustom: false },
+            { id: '4', userId: 'system', name: 'Rent/Housing', icon: 'Home', color: 'purple', isCustom: false },
+            { id: '5', userId: 'system', name: 'Entertainment', icon: 'Frown', color: 'pink', isCustom: false },
+            { id: '6', userId: 'system', name: 'Healthcare', icon: 'Heart', color: 'red', isCustom: false },
+            { id: '7', userId: 'system', name: 'Shopping', icon: 'ShoppingBag', color: 'green', isCustom: false },
+            { id: '8', userId: 'system', name: 'Others', icon: 'MoreHorizontal', color: 'gray', isCustom: false },
+        ];
+        return [...defaults, ...categories.filter(c => c.userId === userId)];
+    }
+
+    async addDailyCategory(userId: string, category: Omit<DailyCategory, 'id' | 'userId' | 'isCustom'>): Promise<DailyCategory> {
+        const categories = this.get<DailyCategory>('daily_categories');
+        const newCat = { ...category, id: generateId(), userId, isCustom: true };
+        categories.push(newCat);
+        this.set('daily_categories', categories);
+        return newCat;
+    }
+
+    async getDailyStats(userId: string) {
+        const expenses = await this.getDailyExpenses(userId);
+        const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+        const categoryBreakdown: Record<string, number> = {};
+        expenses.forEach(e => {
+            categoryBreakdown[e.categoryId] = (categoryBreakdown[e.categoryId] || 0) + e.amount;
+        });
+
+        return { totalSpent, expenseCount: expenses.length, categoryBreakdown };
+    }
+
+    async updateMonthlySalary(userId: string, salary: number): Promise<void> {
+        const users = this.get<UserData & { pass: string }>('users');
+        const idx = users.findIndex(u => u.id === userId);
+        if (idx !== -1) {
+            users[idx].monthlySalary = salary;
+            this.set('users', users);
+        }
+    }
+
+    async getMonthlySalary(userId: string): Promise<number | undefined> {
+        const users = this.get<UserData & { pass: string }>('users');
+        const user = users.find(u => u.id === userId);
+        return user?.monthlySalary;
+    }
+
+    async syncTripExpenses(userId: string, sources: string[] = ['trip']): Promise<number> {
+        const users = this.get<UserData & { pass: string }>('users');
+        const user = users.find(u => u.id === userId);
+        if (!user) return 0;
+
+        const allParticipants = this.get<Participant>('participants');
+        const userParticipantIds = new Set(allParticipants.filter(p => p.name === user.name).map(p => p.id));
+
+        const trips = this.get<Trip>('trips');
+        const tripExpenses = this.get<Expense>('expenses').filter(e =>
+            userParticipantIds.has(e.paidBy) && !e.isPayment
+        );
+
+        const dailyExpenses = this.get<DailyExpense>('daily_expenses');
+        const existingSourceIds = new Set(dailyExpenses.filter(e => e.userId === userId && e.sourceId).map(e => e.sourceId));
+        const categories = await this.getDailyCategories(userId);
+
+        let count = 0;
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+
+        if (sources.includes('trip')) {
+            tripExpenses.forEach(te => {
+                const expDate = new Date(te.date);
+                if (expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear && !existingSourceIds.has(te.id)) {
+                    let catId = '8';
+                    const matchingCat = categories.find(c => c.name.toLowerCase().includes(te.category.toLowerCase()) || te.category.toLowerCase().includes(c.name.toLowerCase()));
+                    if (matchingCat) catId = matchingCat.id;
+
+                    dailyExpenses.push({
+                        id: generateId(),
+                        userId,
+                        description: te.description,
+                        amount: te.amount,
+                        date: te.date,
+                        categoryId: catId,
+                        paymentMethod: 'UPI',
+                        notes: `Synced from trip: ${trips.find(t => t.id === te.tripId)?.name || 'Unknown Trip'}`,
+                        sourceId: te.id,
+                        sourceType: 'trip'
+                    });
+                    count++;
+                }
+            });
+        }
+
+        // Mock additional sources if requested
+        ['dining', 'play', 'entertainment', 'investments'].forEach(source => {
+            if (sources.includes(source)) {
+                // For demo purposes, we generate some mock data if it doesn't exist and sync it
+                // In a real app, these would be separate tables/APIs
+                const mockKey = `${source}_expenses`;
+                let mockItems = this.get<any>(mockKey);
+                if (mockItems.length === 0) {
+                    // Seed some data for this month
+                    mockItems = [
+                        { id: `m-${source}-1`, description: `Mock ${source} 1`, amount: 450, date: now.toISOString(), category: source },
+                        { id: `m-${source}-2`, description: `Mock ${source} 2`, amount: 1200, date: now.toISOString(), category: source },
+                    ];
+                    this.set(mockKey, mockItems);
+                }
+
+                mockItems.forEach(item => {
+                    const expDate = new Date(item.date);
+                    if (expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear && !existingSourceIds.has(item.id)) {
+                        dailyExpenses.push({
+                            id: generateId(),
+                            userId,
+                            description: item.description,
+                            amount: item.amount,
+                            date: item.date,
+                            categoryId: '8',
+                            paymentMethod: 'Card',
+                            notes: `Synced from ${source} module`,
+                            sourceId: item.id,
+                            sourceType: source as any
+                        });
+                        count++;
+                    }
+                });
+            }
+        });
+
+        if (count > 0) {
+            this.set('daily_expenses', dailyExpenses);
+        }
+        return count;
     }
 }
 

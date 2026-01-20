@@ -4,6 +4,7 @@ export interface UserData {
     id: string;
     name: string;
     email: string;
+    monthlySalary?: number;
 }
 
 export interface Participant {
@@ -56,4 +57,26 @@ export interface Settlement {
     to: string;
     toId: string;
     amount: number;
+}
+
+export interface DailyCategory {
+    id: string;
+    userId: string;
+    name: string;
+    icon: string;
+    color: string;
+    isCustom: boolean;
+}
+
+export interface DailyExpense {
+    id: string;
+    userId: string;
+    description: string;
+    amount: number;
+    date: string;
+    categoryId: string;
+    paymentMethod: 'Cash' | 'Card' | 'UPI' | 'Net Banking' | 'Other';
+    notes?: string;
+    sourceId?: string;
+    sourceType?: 'trip' | 'dining' | 'play' | 'entertainment' | 'investments' | 'manual';
 }
