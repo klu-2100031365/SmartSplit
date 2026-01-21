@@ -79,4 +79,5 @@ export interface DailyExpense {
     notes?: string;
     sourceId?: string;
     sourceType?: 'trip' | 'dining' | 'play' | 'entertainment' | 'investments' | 'manual';
+    metadata?: any;
 }

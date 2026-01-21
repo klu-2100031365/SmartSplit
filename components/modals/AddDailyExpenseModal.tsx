@@ -78,17 +78,22 @@ const AddDailyExpenseModal = ({ isOpen, onClose, onSave, categories, expense }: 
                     </div>
                 )}
 
-                <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                        <DollarSign size={20} />
+                <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                        Amount <span className="text-red-500 ml-0.5">*</span>
+                    </label>
+                    <div className="relative">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                            <DollarSign size={20} />
+                        </div>
+                        <input
+                            type="number"
+                            placeholder="0.00"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 text-3xl font-bold bg-gray-50 dark:bg-gray-800 border-none rounded-2xl outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
+                        />
                     </div>
-                    <input
-                        type="number"
-                        placeholder="0.00"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 text-3xl font-bold bg-gray-50 dark:bg-gray-800 border-none rounded-2xl outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
-                    />
                 </div>
 
                 <div className="space-y-4">
@@ -98,6 +103,7 @@ const AddDailyExpenseModal = ({ isOpen, onClose, onSave, categories, expense }: 
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         leftElement={<AlignLeft size={20} />}
+                        required
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -107,6 +113,7 @@ const AddDailyExpenseModal = ({ isOpen, onClose, onSave, categories, expense }: 
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
                             leftElement={<Calendar size={20} />}
+                            required
                         />
 
                         <Select
@@ -131,6 +138,7 @@ const AddDailyExpenseModal = ({ isOpen, onClose, onSave, categories, expense }: 
                             value: cat.id,
                             label: cat.name
                         }))}
+                        required
                     />
 
                     <div className="space-y-2">

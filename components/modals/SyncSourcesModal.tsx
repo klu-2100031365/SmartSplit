@@ -64,7 +64,7 @@ const SyncSourcesModal = ({ isOpen, onClose, onSync, isLoading }: SyncSourcesMod
                 </div>
 
                 <div className="pt-4 flex gap-3">
-                    <Button variant="secondary" className="flex-1" onClick={onClose}>Cancel</Button>
+                    <Button variant="secondary" className="flex-1" onClick={onClose}>Cancel Sync</Button>
                     <Button
                         className="flex-1"
                         onClick={() => onSync(selectedSources)}
