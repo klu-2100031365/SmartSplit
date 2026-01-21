@@ -173,9 +173,7 @@ export default function DailyExpensesPage() {
                         Sync from Modules
                     </Button>
                     <Button className="flex items-center gap-2 group relative overflow-hidden px-8" onClick={() => { setEditingExpense(undefined); setShowAddModal(true); }}>
-                        <span className="hidden group-hover:inline-block animate-pulse text-brand-orange mr-1">*</span>
                         <Plus size={20} /> Add Expense
-                        <span className="hidden group-hover:inline-block animate-pulse text-brand-orange ml-1">*</span>
                     </Button>
                 </div>
             </div>
@@ -294,42 +292,83 @@ export default function DailyExpensesPage() {
                         ) : (
                             filteredExpenses.map(expense => {
                                 const category = categories.find(c => c.id === expense.categoryId);
+                                const isSynced = expense.sourceType && expense.sourceType !== 'manual';
+                                const metadataItems = expense.metadata?.items || [];
+
                                 return (
-                                    <div key={expense.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between group hover:border-brand-blue transition-all">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-3 rounded-xl bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400`}>
-                                                <ShoppingBag size={20} />
+                                    <div
+                                        key={expense.id}
+                                        className={`bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between group hover:border-brand-blue transition-all ${isSynced ? 'cursor-pointer' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-4 w-full">
+                                            <div className={`p-4 rounded-2xl bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400 shrink-0`}>
+                                                <ShoppingBag size={24} />
                                             </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h4 className="font-bold text-gray-900 dark:text-white capitalize">{expense.description}</h4>
-                                                    <Badge variant="secondary" className="text-[10px] py-0 px-2">{expense.paymentMethod}</Badge>
-                                                    {expense.sourceType && expense.sourceType !== 'manual' && (
-                                                        <Badge variant="primary" className="text-[9px] py-0 px-1 border-brand-blue text-brand-blue bg-brand-blue/5">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="font-bold text-gray-900 dark:text-white capitalize truncate">{expense.description}</h4>
+                                                    <Badge variant="secondary" className="text-[10px] py-0 px-2 shrink-0">{expense.paymentMethod}</Badge>
+                                                    {isSynced && (
+                                                        <Badge variant="primary" className="text-[9px] py-0 px-1 border-brand-blue text-brand-blue bg-brand-blue/5 shrink-0">
                                                             {expense.sourceType === 'trip' && <Globe size={10} className="mr-1" />}
                                                             {expense.sourceType === 'play' && <Gamepad2 size={10} className="mr-1" />}
                                                             {expense.sourceType === 'dining' && <Utensils size={10} className="mr-1" />}
                                                             {expense.sourceType === 'entertainment' && <Film size={10} className="mr-1" />}
                                                             {expense.sourceType === 'investments' && <TrendingUp size={10} className="mr-1" />}
-                                                            {expense.sourceType.toUpperCase()}
+                                                            {expense.sourceType!.toUpperCase()}
                                                         </Badge>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                                    <span>{new Date(expense.date).toLocaleDateString()}</span>
-                                                    <span>•</span>
-                                                    <span className="uppercase tracking-wider">{category?.name}</span>
-                                                </div>
+
+                                                {isSynced && metadataItems.length > 0 ? (
+                                                    <div className="space-y-1 mt-2">
+                                                        {metadataItems.map((item: any, idx: number) => (
+                                                            <div key={idx} className="flex flex-col gap-0.5">
+                                                                <div className="flex items-center justify-between group/item">
+                                                                    <div
+                                                                        onClick={(e) => {
+                                                                            if (item.type === 'trip' && item.id) {
+                                                                                e.stopPropagation();
+                                                                                window.location.href = `/trips/${item.id}`;
+                                                                            }
+                                                                        }}
+                                                                        className="text-sm font-bold text-gray-800 dark:text-gray-200 hover:text-brand-blue hover:underline cursor-pointer"
+                                                                    >
+                                                                        {item.name}
+                                                                    </div>
+                                                                    <div className="text-sm font-black text-brand-blue">
+                                                                        {symbol}{item.amount.toFixed(1)}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                                    {item.dates.map((d: string) => new Date(d).toLocaleDateString()).join(', ')}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                                                            <span className="text-[10px] font-black text-gray-400 uppercase">Total Consolidated</span>
+                                                            <span className="text-base font-black text-brand-orange">{symbol}{formatAmount(expense.amount)}</span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                        <span>{new Date(expense.date).toLocaleDateString()}</span>
+                                                        <span>•</span>
+                                                        <span className="uppercase tracking-wider">{category?.name}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-right">
-                                                <p className="font-bold text-gray-900 dark:text-white">{symbol}{formatAmount(expense.amount)}</p>
-                                                <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => handleEditClick(expense)} className="text-gray-400 hover:text-brand-blue p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all" title="Edit">
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button onClick={() => handleDeleteExpense(expense.id)} className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Delete">
+                                        <div className="flex items-center gap-4 ml-4">
+                                            <div className="text-right flex flex-col items-end">
+                                                {!isSynced && <p className="font-bold text-gray-900 dark:text-white text-lg">{symbol}{formatAmount(expense.amount)}</p>}
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {!isSynced && (
+                                                        <button onClick={(e) => { e.stopPropagation(); handleEditClick(expense); }} className="text-gray-400 hover:text-brand-blue p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all" title="Edit">
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                    )}
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteExpense(expense.id); }} className="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Delete">
                                                         <Trash2 size={16} />
                                                     </button>
                                                 </div>

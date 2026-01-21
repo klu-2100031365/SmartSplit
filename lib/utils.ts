@@ -415,88 +415,128 @@ class MockBackend {
         if (!user) return 0;
 
         const allParticipants = this.get<Participant>('participants');
-        const userParticipantIds = new Set(allParticipants.filter(p => p.name === user.name).map(p => p.id));
 
-        const trips = this.get<Trip>('trips');
-        const tripExpenses = this.get<Expense>('expenses').filter(e =>
-            userParticipantIds.has(e.paidBy) && !e.isPayment
-        );
-
-        const dailyExpenses = this.get<DailyExpense>('daily_expenses');
-        const existingSourceIds = new Set(dailyExpenses.filter(e => e.userId === userId && e.sourceId).map(e => e.sourceId));
-        const categories = await this.getDailyCategories(userId);
-
-        let count = 0;
         const now = new Date();
         const thisMonth = now.getMonth();
         const thisYear = now.getFullYear();
+        const monthYearKey = `${thisYear}-${thisMonth + 1}`;
+        const sourceSyncId = `monthly-sync-${monthYearKey}`;
+
+        const dailyExpenses = this.get<DailyExpense>('daily_expenses');
+        // Remove previous monthly sync card to avoid double counting if they re-sync
+        const filteredDailyExpenses = dailyExpenses.filter(e => e.userId !== userId || e.sourceId !== sourceSyncId);
+
+        let totalShare = 0;
+        let count = 0;
+        const syncNotes: string[] = [];
+        const metadataItems: any[] = [];
 
         if (sources.includes('trip')) {
-            tripExpenses.forEach(te => {
-                const expDate = new Date(te.date);
-                if (expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear && !existingSourceIds.has(te.id)) {
-                    let catId = '8';
-                    const matchingCat = categories.find(c => c.name.toLowerCase().includes(te.category.toLowerCase()) || te.category.toLowerCase().includes(c.name.toLowerCase()));
-                    if (matchingCat) catId = matchingCat.id;
+            const ownedTrips = this.get<Trip>('trips').filter(t => t.ownerId === userId);
+            const ownedTripIds = new Set(ownedTrips.map(t => t.id));
 
-                    dailyExpenses.push({
-                        id: generateId(),
-                        userId,
-                        description: te.description,
-                        amount: te.amount,
-                        date: te.date,
-                        categoryId: catId,
-                        paymentMethod: 'UPI',
-                        notes: `Synced from trip: ${trips.find(t => t.id === te.tripId)?.name || 'Unknown Trip'}`,
-                        sourceId: te.id,
-                        sourceType: 'trip'
-                    });
+            // Get user's participant IDs with case-insensitive matching
+            const relevantParticipants = this.get<Participant>('participants').filter(p =>
+                ownedTripIds.has(p.tripId) && p.name.trim().toLowerCase() === user.name.trim().toLowerCase()
+            );
+            const userParticipantIds = new Set(relevantParticipants.map(p => p.id));
+
+            const tripExpenses = this.get<Expense>('expenses').filter(e =>
+                ownedTripIds.has(e.tripId) && !e.isPayment
+            );
+
+            const tripBreakdown: Record<string, { share: number, dates: Set<string>, id: string }> = {};
+
+            tripExpenses.forEach(te => {
+                const splitAmong = te.splitAmong || [];
+                const userOccurrenceCount = splitAmong.filter(id => userParticipantIds.has(id)).length;
+
+                if (userOccurrenceCount > 0) {
+                    const share = (te.amount / (splitAmong.length || 1)) * userOccurrenceCount;
+                    totalShare += share;
                     count++;
+
+                    const trip = ownedTrips.find(t => t.id === te.tripId);
+                    const tripName = trip?.name || 'Unknown Trip';
+                    if (!tripBreakdown[tripName]) {
+                        tripBreakdown[tripName] = { share: 0, dates: new Set(), id: te.tripId };
+                    }
+                    tripBreakdown[tripName].share += share;
+                    tripBreakdown[tripName].dates.add(te.date.split('T')[0]);
                 }
             });
+
+            if (Object.keys(tripBreakdown).length > 0) {
+                const breakdownStr = Object.entries(tripBreakdown)
+                    .map(([name, data]) => `${name}: ₹${data.share.toFixed(1)}`)
+                    .join(', ');
+                syncNotes.push(`Trips: ${breakdownStr}`);
+
+                Object.entries(tripBreakdown).forEach(([name, data]) => {
+                    metadataItems.push({
+                        type: 'trip',
+                        id: data.id,
+                        name: name,
+                        amount: data.share,
+                        dates: Array.from(data.dates).sort()
+                    });
+                });
+            }
         }
 
-        // Mock additional sources if requested
         ['dining', 'play', 'entertainment', 'investments'].forEach(source => {
             if (sources.includes(source)) {
-                // For demo purposes, we generate some mock data if it doesn't exist and sync it
-                // In a real app, these would be separate tables/APIs
                 const mockKey = `${source}_expenses`;
                 let mockItems = this.get<any>(mockKey);
                 if (mockItems.length === 0) {
-                    // Seed some data for this month
                     mockItems = [
-                        { id: `m-${source}-1`, description: `Mock ${source} 1`, amount: 450, date: now.toISOString(), category: source },
-                        { id: `m-${source}-2`, description: `Mock ${source} 2`, amount: 1200, date: now.toISOString(), category: source },
+                        { id: `m-${source}-1`, description: `Mock ${source} 1`, amount: 450, date: now.toISOString(), category: source, splitCount: 1 },
+                        { id: `m-${source}-2`, description: `Mock ${source} 2`, amount: 1200, date: now.toISOString(), category: source, splitCount: 1 },
                     ];
                     this.set(mockKey, mockItems);
                 }
 
+                let sourceTotal = 0;
                 mockItems.forEach(item => {
                     const expDate = new Date(item.date);
-                    if (expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear && !existingSourceIds.has(item.id)) {
-                        dailyExpenses.push({
-                            id: generateId(),
-                            userId,
-                            description: item.description,
-                            amount: item.amount,
-                            date: item.date,
-                            categoryId: '8',
-                            paymentMethod: 'Card',
-                            notes: `Synced from ${source} module`,
-                            sourceId: item.id,
-                            sourceType: source as any
-                        });
+                    if (expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear) {
+                        const share = item.amount / (item.splitCount || 1);
+                        sourceTotal += share;
+                        totalShare += share;
                         count++;
                     }
                 });
+                if (sourceTotal > 0) {
+                    syncNotes.push(`${source.charAt(0).toUpperCase() + source.slice(1)}: ₹${sourceTotal.toFixed(1)}`);
+                    metadataItems.push({
+                        type: source,
+                        name: source.charAt(0).toUpperCase() + source.slice(1),
+                        amount: sourceTotal,
+                        dates: [now.toISOString().split('T')[0]]
+                    });
+                }
             }
         });
 
-        if (count > 0) {
-            this.set('daily_expenses', dailyExpenses);
+        if (totalShare > 0) {
+            filteredDailyExpenses.push({
+                id: generateId(),
+                userId,
+                description: sources.length === 1 && sources[0] === 'trip' ? 'Trips Sync' : `Module Sync: ${sources.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}`,
+                amount: totalShare,
+                date: now.toISOString(),
+                categoryId: '8', // Others
+                paymentMethod: 'UPI',
+                notes: syncNotes.join(' - ') || `Consolidated share from ${count} items.`,
+                sourceId: sourceSyncId,
+                sourceType: sources.length === 1 ? sources[0] as any : 'manual',
+                metadata: { items: metadataItems }
+            });
+            this.set('daily_expenses', filteredDailyExpenses);
+            return 1;
         }
-        return count;
+
+        return 0;
     }
 }
 
