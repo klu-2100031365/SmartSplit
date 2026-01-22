@@ -298,7 +298,12 @@ export default function DailyExpensesPage() {
                                 return (
                                     <div
                                         key={expense.id}
-                                        className={`bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between group hover:border-brand-blue transition-all ${isSynced ? 'cursor-pointer' : ''}`}
+                                        className={`bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between group hover:border-brand-blue transition-all ${isSynced ? 'cursor-pointer hover:shadow-md' : ''}`}
+                                        onClick={() => {
+                                            if (isSynced && expense.sourceType === 'trip') {
+                                                window.location.href = '/trips';
+                                            }
+                                        }}
                                     >
                                         <div className="flex items-center gap-4 w-full">
                                             <div className={`p-4 rounded-2xl bg-gray-100 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400 shrink-0`}>
@@ -326,13 +331,7 @@ export default function DailyExpensesPage() {
                                                             <div key={idx} className="flex flex-col gap-0.5">
                                                                 <div className="flex items-center justify-between group/item">
                                                                     <div
-                                                                        onClick={(e) => {
-                                                                            if (item.type === 'trip' && item.id) {
-                                                                                e.stopPropagation();
-                                                                                window.location.href = `/trips/${item.id}`;
-                                                                            }
-                                                                        }}
-                                                                        className="text-sm font-bold text-gray-800 dark:text-gray-200 hover:text-brand-blue hover:underline cursor-pointer"
+                                                                        className="text-sm font-bold text-gray-800 dark:text-gray-200"
                                                                     >
                                                                         {item.name}
                                                                     </div>

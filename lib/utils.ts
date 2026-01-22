@@ -2,6 +2,13 @@ import { UserData, Trip, Participant, Expense, ChangeLog, SharePermission, Settl
 
 export const generateId = () => Math.random().toString(36).substring(2, 15);
 
+export const slugify = (text: string) => text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
 export function calculateSettlements(participants: Participant[], expenses: Expense[]): {
     settlements: Settlement[],
     stats: Record<string, { paid: number, share: number, received: number }>,
@@ -121,7 +128,15 @@ class MockBackend {
 
     async getTrips(userId: string): Promise<Trip[]> {
         const trips = this.get<Trip>('trips');
-        return trips.filter(t => t.ownerId === userId).reverse();
+        const userTrips = trips.filter(t => t.ownerId === userId);
+
+        if (userTrips.length === 0) {
+            // Seed a "Routes" trip if the user has no trips, as requested
+            const newTrip = await this.createTrip(userId, 'Routes');
+            return [newTrip];
+        }
+
+        return userTrips.reverse();
     }
 
     async deleteTrip(userId: string, tripId: string): Promise<void> {
@@ -133,7 +148,7 @@ class MockBackend {
         await new Promise(r => setTimeout(r, 600));
         const trips = this.get<Trip>('trips');
         const newTrip = {
-            id: generateId(),
+            id: slugify(name) || generateId(),
             name,
             ownerId: userId,
             createdAt: new Date().toISOString(),
@@ -488,13 +503,6 @@ class MockBackend {
             if (sources.includes(source)) {
                 const mockKey = `${source}_expenses`;
                 let mockItems = this.get<any>(mockKey);
-                if (mockItems.length === 0) {
-                    mockItems = [
-                        { id: `m-${source}-1`, description: `Mock ${source} 1`, amount: 450, date: now.toISOString(), category: source, splitCount: 1 },
-                        { id: `m-${source}-2`, description: `Mock ${source} 2`, amount: 1200, date: now.toISOString(), category: source, splitCount: 1 },
-                    ];
-                    this.set(mockKey, mockItems);
-                }
 
                 let sourceTotal = 0;
                 mockItems.forEach(item => {
