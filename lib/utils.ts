@@ -179,12 +179,13 @@ class MockBackend {
 
     async getTripDetails(tripId: string) {
         const trips = this.get<Trip>('trips');
-        const trip = trips.find(t => t.id === tripId);
+        // Find by ID or by slugified name
+        const trip = trips.find(t => t.id === tripId || slugify(t.name) === tripId);
         if (!trip) throw new Error("Trip not found");
 
-        const participants = this.get<Participant>('participants').filter(p => p.tripId === tripId);
-        const expenses = this.get<Expense>('expenses').filter(e => e.tripId === tripId);
-        const logs = this.get<ChangeLog>('logs').filter(l => l.tripId === tripId).reverse();
+        const participants = this.get<Participant>('participants').filter(p => p.tripId === trip.id);
+        const expenses = this.get<Expense>('expenses').filter(e => e.tripId === trip.id);
+        const logs = this.get<ChangeLog>('logs').filter(l => l.tripId === trip.id).reverse();
 
         return { trip, participants, expenses, logs };
     }
@@ -344,6 +345,22 @@ class MockBackend {
         return { trips, expenses };
     }
 
+    async getUserTripExpenses(userId: string): Promise<Record<string, number>> {
+        const allExpenses = this.get<Expense>('expenses');
+        const userShares: Record<string, number> = {};
+
+        allExpenses.forEach(exp => {
+            if (exp.isPayment) return;
+            const splitAmong = exp.splitAmong || [];
+            if (splitAmong.includes(userId)) {
+                const share = (exp.amount || 0) / (splitAmong.length || 1);
+                userShares[exp.tripId] = (userShares[exp.tripId] || 0) + share;
+            }
+        });
+
+        return userShares;
+    }
+
     // Daily Expenses
     async getDailyExpenses(userId: string): Promise<DailyExpense[]> {
         const expenses = this.get<DailyExpense>('daily_expenses');
@@ -424,33 +441,61 @@ class MockBackend {
         return user?.monthlySalary;
     }
 
-    async syncTripExpenses(userId: string, sources: string[] = ['trip']): Promise<number> {
+    async unsyncTripExpenses(userId: string, sources: string[] = ['trip']): Promise<number> {
         const users = this.get<UserData & { pass: string }>('users');
         const user = users.find(u => u.id === userId);
         if (!user) return 0;
-
-        const allParticipants = this.get<Participant>('participants');
 
         const now = new Date();
         const thisMonth = now.getMonth();
         const thisYear = now.getFullYear();
         const monthYearKey = `${thisYear}-${thisMonth + 1}`;
-        const sourceSyncId = `monthly-sync-${monthYearKey}`;
+        const batchSyncId = `monthly-sync-${monthYearKey}`;
 
         const dailyExpenses = this.get<DailyExpense>('daily_expenses');
-        // Remove previous monthly sync card to avoid double counting if they re-sync
-        const filteredDailyExpenses = dailyExpenses.filter(e => e.userId !== userId || e.sourceId !== sourceSyncId);
+        const initialCount = dailyExpenses.length;
 
-        let totalShare = 0;
-        let count = 0;
-        const syncNotes: string[] = [];
-        const metadataItems: any[] = [];
+        // Filter out expenses that match the batch ID and are in the list of sources to be removed
+        const newDailyExpenses = dailyExpenses.filter(e => {
+            if (e.userId !== userId) return true;
+            if (!e.sourceId?.startsWith(batchSyncId)) return true;
+            return !sources.includes(e.sourceType || '');
+        });
 
+        this.set('daily_expenses', newDailyExpenses);
+        return initialCount - newDailyExpenses.length;
+    }
+
+    async syncTripExpenses(userId: string, sources: string[] = ['trip']): Promise<number> {
+        const users = this.get<UserData & { pass: string }>('users');
+        const user = users.find(u => u.id === userId);
+        if (!user) return 0;
+
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+        const monthYearKey = `${thisYear}-${thisMonth + 1}`;
+        // Base sync ID for this month's batch
+        const batchSyncId = `monthly-sync-${monthYearKey}`;
+
+        const dailyExpenses = this.get<DailyExpense>('daily_expenses');
+        // Remove previous monthly sync cards for the selected sources to avoid duplication
+        // We filter out any expense that has a sourceId starting with the batch key AND is from one of the selected sources
+        const filteredDailyExpenses = dailyExpenses.filter(e => {
+            if (e.userId !== userId) return true;
+            if (!e.sourceId?.startsWith(batchSyncId)) return true;
+            // If it's a sync entry, check if its type is being re-synced
+            return !sources.includes(e.sourceType || '');
+        });
+
+        let totalAdded = 0;
+        const newExpenses: DailyExpense[] = [];
+
+        // 1. Process Trips
         if (sources.includes('trip')) {
             const ownedTrips = this.get<Trip>('trips').filter(t => t.ownerId === userId);
             const ownedTripIds = new Set(ownedTrips.map(t => t.id));
 
-            // Get user's participant IDs with case-insensitive matching
             const relevantParticipants = this.get<Participant>('participants').filter(p =>
                 ownedTripIds.has(p.tripId) && p.name.trim().toLowerCase() === user.name.trim().toLowerCase()
             );
@@ -460,7 +505,9 @@ class MockBackend {
                 ownedTripIds.has(e.tripId) && !e.isPayment
             );
 
-            const tripBreakdown: Record<string, { share: number, dates: Set<string>, id: string }> = {};
+            let tripShare = 0;
+            const tripMetadata: any[] = [];
+            let tripCount = 0;
 
             tripExpenses.forEach(te => {
                 const splitAmong = te.splitAmong || [];
@@ -468,80 +515,113 @@ class MockBackend {
 
                 if (userOccurrenceCount > 0) {
                     const share = (te.amount / (splitAmong.length || 1)) * userOccurrenceCount;
-                    totalShare += share;
-                    count++;
+                    tripShare += share;
+                    tripCount++;
 
                     const trip = ownedTrips.find(t => t.id === te.tripId);
                     const tripName = trip?.name || 'Unknown Trip';
-                    if (!tripBreakdown[tripName]) {
-                        tripBreakdown[tripName] = { share: 0, dates: new Set(), id: te.tripId };
-                    }
-                    tripBreakdown[tripName].share += share;
-                    tripBreakdown[tripName].dates.add(te.date.split('T')[0]);
+                    tripMetadata.push({
+                        type: 'trip',
+                        id: te.tripId,
+                        name: tripName,
+                        amount: share,
+                        date: te.date
+                    });
                 }
             });
 
-            if (Object.keys(tripBreakdown).length > 0) {
-                const breakdownStr = Object.entries(tripBreakdown)
+            if (tripShare > 0) {
+                // Group metadata by trip for cleaner display
+                const groupedTripData: Record<string, { share: number, dates: Set<string> }> = {};
+                tripMetadata.forEach(m => {
+                    if (!groupedTripData[m.name]) groupedTripData[m.name] = { share: 0, dates: new Set() };
+                    groupedTripData[m.name].share += m.amount;
+                    groupedTripData[m.name].dates.add(m.date.split('T')[0]);
+                });
+
+                const metadataItems = Object.entries(groupedTripData).map(([name, data]) => ({
+                    type: 'trip',
+                    name: name,
+                    amount: data.share,
+                    dates: Array.from(data.dates).sort()
+                }));
+
+                const breakdownStr = Object.entries(groupedTripData)
                     .map(([name, data]) => `${name}: ₹${data.share.toFixed(1)}`)
                     .join(', ');
-                syncNotes.push(`Trips: ${breakdownStr}`);
 
-                Object.entries(tripBreakdown).forEach(([name, data]) => {
-                    metadataItems.push({
-                        type: 'trip',
-                        id: data.id,
-                        name: name,
-                        amount: data.share,
-                        dates: Array.from(data.dates).sort()
-                    });
+                newExpenses.push({
+                    id: generateId(),
+                    userId,
+                    description: 'Trips Sync',
+                    amount: tripShare,
+                    date: now.toISOString(),
+                    categoryId: '2', // Transport/Travel usually, or map to a specific one
+                    paymentMethod: 'UPI', // Default
+                    notes: `Synced from ${tripCount} expenses in: ${breakdownStr}`,
+                    sourceId: `${batchSyncId}-trip`,
+                    sourceType: 'trip',
+                    metadata: { items: metadataItems }
                 });
+                totalAdded++;
             }
         }
 
+        // 2. Process Other Modules
         ['dining', 'play', 'entertainment', 'investments'].forEach(source => {
             if (sources.includes(source)) {
                 const mockKey = `${source}_expenses`;
-                let mockItems = this.get<any>(mockKey);
+                // Force empty for now to avoid legacy/seeder data (like the 1650 value) persisting
+                // Since there is no UI to add to these specific source keys yet, they should be empty.
+                const mockItems: any[] = [];
 
                 let sourceTotal = 0;
+                let count = 0;
+                const metadataItems: any[] = [];
+
                 mockItems.forEach(item => {
                     const expDate = new Date(item.date);
                     if (expDate.getMonth() === thisMonth && expDate.getFullYear() === thisYear) {
                         const share = item.amount / (item.splitCount || 1);
                         sourceTotal += share;
-                        totalShare += share;
                         count++;
                     }
                 });
+
                 if (sourceTotal > 0) {
-                    syncNotes.push(`${source.charAt(0).toUpperCase() + source.slice(1)}: ₹${sourceTotal.toFixed(1)}`);
                     metadataItems.push({
                         type: source,
                         name: source.charAt(0).toUpperCase() + source.slice(1),
                         amount: sourceTotal,
                         dates: [now.toISOString().split('T')[0]]
                     });
+
+                    newExpenses.push({
+                        id: generateId(),
+                        userId,
+                        description: `${source.charAt(0).toUpperCase() + source.slice(1)} Sync`,
+                        amount: sourceTotal,
+                        date: now.toISOString(),
+                        categoryId: source === 'dining' ? '1' : source === 'entertainment' ? '5' : '8', // Basic mapping
+                        paymentMethod: 'UPI',
+                        notes: `Consolidated share from ${count} ${source} items.`,
+                        sourceId: `${batchSyncId}-${source}`,
+                        sourceType: source as any,
+                        metadata: { items: metadataItems }
+                    });
+                    totalAdded++;
                 }
             }
         });
 
-        if (totalShare > 0) {
-            filteredDailyExpenses.push({
-                id: generateId(),
-                userId,
-                description: sources.length === 1 && sources[0] === 'trip' ? 'Trips Sync' : `Module Sync: ${sources.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}`,
-                amount: totalShare,
-                date: now.toISOString(),
-                categoryId: '8', // Others
-                paymentMethod: 'UPI',
-                notes: syncNotes.join(' - ') || `Consolidated share from ${count} items.`,
-                sourceId: sourceSyncId,
-                sourceType: sources.length === 1 ? sources[0] as any : 'manual',
-                metadata: { items: metadataItems }
-            });
+        if (totalAdded > 0) {
+            this.set('daily_expenses', [...filteredDailyExpenses, ...newExpenses]);
+            return newExpenses.length;
+        }
+
+        // If no expenses were added but we filtered out old ones, we need to save the filtered list
+        if (filteredDailyExpenses.length !== dailyExpenses.length) {
             this.set('daily_expenses', filteredDailyExpenses);
-            return 1;
         }
 
         return 0;

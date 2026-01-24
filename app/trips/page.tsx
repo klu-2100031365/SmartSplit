@@ -3,8 +3,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Plane } from 'lucide-react';
-import { AuthContext } from '../../context/AppContext';
-import { api } from '../../lib/utils';
+import { AuthContext, CurrencyContext } from '../../context/AppContext';
+import { api, slugify } from '../../lib/utils';
 import { Trip } from '../../types';
 import Button from '../../components/ui/Button';
 import TripCard from '../../components/cards/TripCard';
@@ -12,13 +12,23 @@ import AddTripModal from '../../components/modals/AddTripModal';
 
 const TripsList = () => {
     const { user } = useContext(AuthContext);
+    const { symbol } = useContext(CurrencyContext);
     const router = useRouter();
     const [trips, setTrips] = useState<Trip[]>([]);
+    const [shares, setShares] = useState<Record<string, number>>({});
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
 
     const loadTrips = () => {
-        if (user) api.getTrips(user.id).then(setTrips);
+        if (user) {
+            Promise.all([
+                api.getTrips(user.id),
+                api.getUserTripExpenses(user.id)
+            ]).then(([tripList, shareMap]) => {
+                setTrips(tripList);
+                setShares(shareMap);
+            });
+        }
     };
 
     useEffect(loadTrips, [user]);
@@ -60,7 +70,9 @@ const TripsList = () => {
                     <TripCard
                         key={trip.id}
                         trip={trip}
-                        onClick={() => router.push(`/trips/${trip.id}`)}
+                        userShare={shares[trip.id]}
+                        symbol={symbol}
+                        onClick={() => router.push(`/trips/${slugify(trip.name)}`)}
                         onDelete={() => handleDelete(trip.id)}
                         onEdit={() => {
                             setEditingTrip(trip);
