@@ -9,10 +9,11 @@ interface SyncSourcesModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSync: (sources: string[]) => void;
+    onUnsync: (sources: string[]) => void;
     isLoading: boolean;
 }
 
-const SyncSourcesModal = ({ isOpen, onClose, onSync, isLoading }: SyncSourcesModalProps) => {
+const SyncSourcesModal = ({ isOpen, onClose, onSync, onUnsync, isLoading }: SyncSourcesModalProps) => {
     const [selectedSources, setSelectedSources] = useState<string[]>(['trip']);
 
     const sources = [
@@ -64,8 +65,16 @@ const SyncSourcesModal = ({ isOpen, onClose, onSync, isLoading }: SyncSourcesMod
                 </div>
 
                 <div className="pt-4 flex gap-3">
-                    <Button variant="secondary" className="flex-1" onClick={onClose}>Cancel Sync</Button>
                     <Button
+                        variant="secondary"
+                        className="flex-1 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => onUnsync(selectedSources)}
+                        disabled={isLoading || selectedSources.length === 0}
+                    >
+                        Unsync Selected
+                    </Button>
+                    <Button
+                        variant="primary"
                         className="flex-1"
                         onClick={() => onSync(selectedSources)}
                         isLoading={isLoading}

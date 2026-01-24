@@ -131,8 +131,11 @@ export default function DailyExpensesPage() {
         setIsSyncing(true);
         try {
             const count = await api.syncTripExpenses(user.id, sources);
-            alert(`Synced ${count} new expenses from selected modules!`);
             setShowSyncModal(false);
+            // Non-blocking alert or notification would be better here, but keeping it simple
+            setTimeout(() => {
+                alert(`Synced ${count} new expenses from selected modules!`);
+            }, 100);
             refresh();
         } catch (error) {
             console.error(error);
@@ -292,7 +295,7 @@ export default function DailyExpensesPage() {
                         ) : (
                             filteredExpenses.map(expense => {
                                 const category = categories.find(c => c.id === expense.categoryId);
-                                const isSynced = expense.sourceType && expense.sourceType !== 'manual';
+                                const isSynced = (expense.sourceType && expense.sourceType !== 'manual') || !!expense.sourceId;
                                 const metadataItems = expense.metadata?.items || [];
 
                                 return (
@@ -487,6 +490,23 @@ export default function DailyExpensesPage() {
                 isOpen={showSyncModal}
                 onClose={() => setShowSyncModal(false)}
                 onSync={handleSync}
+                onUnsync={async (sources) => {
+                    if (!user) return;
+                    setIsSyncing(true);
+                    try {
+                        const count = await api.unsyncTripExpenses(user.id, sources);
+                        setShowSyncModal(false);
+                        setTimeout(() => {
+                            alert(`Unsynced ${count} expenses.`);
+                        }, 100);
+                        refresh();
+                    } catch (error) {
+                        console.error(error);
+                        alert("Failed to unsync expenses.");
+                    } finally {
+                        setIsSyncing(false);
+                    }
+                }}
                 isLoading={isSyncing}
             />
         </div>

@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import { Plane, Trash2, Edit2, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { TRIP_ICONS } from '../../lib/constants';
-import { formatDateWithDay } from '../../lib/formatters';
+import { formatDateWithDay, formatAmount } from '../../lib/formatters';
 import { Trip } from '../../types';
 
-const TripCard: React.FC<{ trip: Trip, onClick: () => void, onDelete?: () => void, onEdit?: () => void }> = ({ trip, onClick, onDelete, onEdit }) => {
+const TripCard: React.FC<{ trip: Trip, onClick: () => void, onDelete?: () => void, onEdit?: () => void, userShare?: number, symbol?: string }> = ({ trip, onClick, onDelete, onEdit, userShare, symbol }) => {
     const [isAnimating, setIsAnimating] = useState(false);
 
     const handleClick = () => {
@@ -73,7 +73,14 @@ const TripCard: React.FC<{ trip: Trip, onClick: () => void, onDelete?: () => voi
                                 </>
                             )}
                         </div>
-                        <h3 className="font-bold text-xl text-gray-900 dark:text-white">{trip.name}</h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-xl text-gray-900 dark:text-white">{trip.name}</h3>
+                            {userShare !== undefined && symbol && (
+                                <span className="text-xs font-bold text-brand-blue bg-brand-blue/5 px-2 py-0.5 rounded-full border border-brand-blue/10">
+                                    <span className="opacity-70 font-medium mr-1">Your Share:</span>{symbol}{formatAmount(userShare)}
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <span className="text-sm ml-1 text-gray-500 dark:text-gray-400">
                         {formatDateWithDay(trip.createdAt)}

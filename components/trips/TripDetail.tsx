@@ -262,6 +262,16 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
         return { participantStats: pStats, dailyStats: dStats, categoryStats: cStatsArray, totalTripCost, totalPayerStats, individualShareStats };
     }, [data, settlementData, groupedExpenses]);
 
+    const userParticipant = useMemo(() => {
+        if (!data || !user) return null;
+        return data.participants.find(p => p.name.trim().toLowerCase() === user.name.trim().toLowerCase());
+    }, [data, user]);
+
+    const userShare = useMemo(() => {
+        if (!userParticipant || !settlementData) return 0;
+        return settlementData.stats[userParticipant.id]?.share || 0;
+    }, [userParticipant, settlementData]);
+
 
     if (!data) return <div className="min-h-screen flex items-center justify-center text-gray-500 dark:text-gray-400 text-lg"> Loading trip details...</div>;
 
@@ -405,13 +415,22 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
         }
     };
 
+
     return (
         <div className="p-4 sm:p-10 max-w-[1600px] mx-auto pb-32 min-h-screen" onClick={() => setActiveMenuId(null)}>
             <div className="mb-12">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                     <div>
                         <div className="flex items-center gap-3 mb-3">
-                            <h1 className="text-4xl font-bold text-gray-900 dark:text-white"> {data.trip.name} </h1>
+                            <h1 className="text-4xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                                {data.trip.name}
+                                {userShare > 0 && (
+                                    <span className="text-xl font-bold text-brand-blue bg-brand-blue/5 px-3 py-1 rounded-full border border-brand-blue/10 flex items-center gap-1">
+                                        <span className="text-sm font-bold text-brand-blue/70 uppercase tracking-wider">Your Share:</span>
+                                        {symbol}{formatAmount(userShare)}
+                                    </span>
+                                )}
+                            </h1>
                             {
                                 isSharedView && (
                                     <span className="px-3 py-1 bg-brand-orange/10 text-brand-orange text-sm font-bold rounded-lg border border-brand-orange/20">
