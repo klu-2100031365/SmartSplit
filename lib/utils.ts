@@ -128,7 +128,8 @@ class MockBackend {
 
     async getTrips(userId: string): Promise<Trip[]> {
         const trips = this.get<Trip>('trips');
-        const userTrips = trips.filter(t => t.ownerId === userId);
+        // Default to 'trip' if type is undefined for backward compatibility
+        const userTrips = trips.filter(t => t.ownerId === userId && (t.type === 'trip' || t.type === undefined));
 
         if (userTrips.length === 0) {
             // Seed a "Routes" trip if the user has no trips, as requested
@@ -139,21 +140,28 @@ class MockBackend {
         return userTrips.reverse();
     }
 
+    async getDiningEvents(userId: string): Promise<Trip[]> {
+        const trips = this.get<Trip>('trips');
+        const tasks = trips.filter(t => t.ownerId === userId && t.type === 'dining');
+        return tasks.reverse();
+    }
+
     async deleteTrip(userId: string, tripId: string): Promise<void> {
         const trips = this.get<Trip>('trips');
         this.set('trips', trips.filter(t => !(t.id === tripId && t.ownerId === userId)));
     }
 
-    async createTrip(userId: string, name: string, icon: string = 'plane', customImage?: string): Promise<Trip> {
+    async createTrip(userId: string, name: string, icon: string = 'plane', customImage?: string, type: 'trip' | 'dining' = 'trip'): Promise<Trip> {
         await new Promise(r => setTimeout(r, 600));
         const trips = this.get<Trip>('trips');
-        const newTrip = {
+        const newTrip: Trip = {
             id: slugify(name) || generateId(),
             name,
             ownerId: userId,
             createdAt: new Date().toISOString(),
             icon,
-            customImage
+            customImage,
+            type
         };
         trips.push(newTrip);
         this.set('trips', trips);
@@ -424,6 +432,57 @@ class MockBackend {
         });
 
         return { totalSpent, expenseCount: expenses.length, categoryBreakdown };
+    }
+
+    // Dining Expenses
+    async getDiningExpenses(userId: string): Promise<DailyExpense[]> {
+        const expenses = this.get<DailyExpense>('dining_expenses'); // Separate key
+        return expenses.filter(e => e.userId === userId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    async addDiningExpense(userId: string, expense: Omit<DailyExpense, 'id' | 'userId'>): Promise<DailyExpense> {
+        await new Promise(r => setTimeout(r, 400));
+        const expenses = this.get<DailyExpense>('dining_expenses');
+        const newExpense = { ...expense, id: generateId(), userId };
+        expenses.push(newExpense);
+        this.set('dining_expenses', expenses);
+        return newExpense;
+    }
+
+    async updateDiningExpense(userId: string, expenseId: string, data: Partial<DailyExpense>): Promise<void> {
+        const expenses = this.get<DailyExpense>('dining_expenses');
+        const idx = expenses.findIndex(e => e.id === expenseId && e.userId === userId);
+        if (idx !== -1) {
+            expenses[idx] = { ...expenses[idx], ...data };
+            this.set('dining_expenses', expenses);
+        }
+    }
+
+    async deleteDiningExpense(userId: string, expenseId: string): Promise<void> {
+        const expenses = this.get<DailyExpense>('dining_expenses');
+        this.set('dining_expenses', expenses.filter(e => !(e.id === expenseId && e.userId === userId)));
+    }
+
+    async getDiningCategories(userId: string): Promise<DailyCategory[]> {
+        const categories = this.get<DailyCategory>('dining_categories');
+        const defaults: DailyCategory[] = [
+            { id: 'd1', userId: 'system', name: 'Breakfast', icon: 'Sun', color: 'orange', isCustom: false },
+            { id: 'd2', userId: 'system', name: 'Lunch', icon: 'Utensils', color: 'blue', isCustom: false },
+            { id: 'd3', userId: 'system', name: 'Dinner', icon: 'Moon', color: 'indigo', isCustom: false },
+            { id: 'd4', userId: 'system', name: 'Snacks', icon: 'Coffee', color: 'pink', isCustom: false },
+            { id: 'd5', userId: 'system', name: 'Drinks', icon: 'Wine', color: 'purple', isCustom: false },
+            { id: 'd6', userId: 'system', name: 'Groceries', icon: 'ShoppingBag', color: 'green', isCustom: false },
+            { id: 'd7', userId: 'system', name: 'Others', icon: 'MoreHorizontal', color: 'gray', isCustom: false },
+        ];
+        return [...defaults, ...categories.filter(c => c.userId === userId)];
+    }
+
+    async addDiningCategory(userId: string, category: Omit<DailyCategory, 'id' | 'userId' | 'isCustom'>): Promise<DailyCategory> {
+        const categories = this.get<DailyCategory>('dining_categories');
+        const newCat = { ...category, id: generateId(), userId, isCustom: true };
+        categories.push(newCat);
+        this.set('dining_categories', categories);
+        return newCat;
     }
 
     async updateMonthlySalary(userId: string, salary: number): Promise<void> {

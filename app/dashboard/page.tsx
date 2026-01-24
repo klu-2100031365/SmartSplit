@@ -2,7 +2,7 @@
 
 import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PieChart, Users, Receipt, Plane, Plus, Wallet } from 'lucide-react';
+import { PieChart, Users, Receipt, Plane, Plus, Wallet, Utensils } from 'lucide-react';
 import { AuthContext, CurrencyContext } from '../../context/AppContext';
 import { api } from '../../lib/utils';
 import { formatAmount } from '../../lib/formatters';
@@ -79,8 +79,14 @@ const Dashboard = () => {
                             icon={Wallet}
                             onClick={() => router.push('/daily-expenses')}
                         />
+                        <ModuleCard
+                            title="Dining"
+                            desc="Food & drinks"
+                            icon={Utensils}
+                            onClick={() => router.push('/dining')}
+                        />
                         {
-                            ['Dining', 'Movies', 'Play'].map((item, i) => (
+                            ['Movies', 'Play'].map((item, i) => (
                                 <ModuleCard
                                     key={i}
                                     title={item}

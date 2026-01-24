@@ -1,4 +1,8 @@
-import { Plane, Utensils, Film, Gamepad2, PiggyBank, TrendingUp, Car, Home, Pizza, Coffee, HelpCircle, ShoppingBag, Wallet } from 'lucide-react';
+import {
+    Plane, Utensils, Film, Gamepad2, PiggyBank, TrendingUp, Car, Home,
+    Pizza, Coffee, HelpCircle, ShoppingBag, Wallet, Sun, Moon, Wine,
+    MoreHorizontal
+} from 'lucide-react';
 import { Currency } from '../types';
 
 export const CURRENCIES: Record<Currency, string> = {
@@ -28,6 +32,24 @@ export const CATEGORY_STYLES: Record<string, { icon: React.ElementType, bg: stri
     Others: { icon: HelpCircle, bg: 'bg-indigo-100 dark:bg-indigo-900/30', color: 'text-indigo-600 dark:text-indigo-400' },
     Payment: { icon: Coffee, bg: 'bg-emerald-100 dark:bg-emerald-900/30', color: 'text-emerald-600 dark:text-emerald-400' }
 };
+
 export const getCategoryStyles = (category: string) => {
     return CATEGORY_STYLES[category] || CATEGORY_STYLES['Others'];
+};
+
+export const DAILY_EXPENSE_ICONS: Record<string, React.ElementType> = {
+    Sun: Sun,
+    Utensils: Utensils,
+    Moon: Moon,
+    Coffee: Coffee,
+    Wine: Wine,
+    ShoppingBag: ShoppingBag,
+    MoreHorizontal: MoreHorizontal,
+    Pizza: Pizza,
+    Car: Car,
+    Zap: HelpCircle,
+    Home: Home,
+    Frown: HelpCircle,
+    Heart: HelpCircle,
+    Gift: HelpCircle,
 };
