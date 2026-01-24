@@ -14,25 +14,27 @@ interface AddTripModalProps {
     onClose: () => void;
     onSave: (name: string, icon: string, customImage?: string) => Promise<void>;
     editingTrip?: Trip | null;
+    title?: string;
+    defaultIcon?: string;
 }
 
-const AddTripModal = ({ isOpen, onClose, onSave, editingTrip }: AddTripModalProps) => {
+const AddTripModal = ({ isOpen, onClose, onSave, editingTrip, title, defaultIcon = 'plane' }: AddTripModalProps) => {
     const [name, setName] = useState('');
-    const [selectedIcon, setSelectedIcon] = useState<string>('plane');
+    const [selectedIcon, setSelectedIcon] = useState<string>(defaultIcon);
     const [customImage, setCustomImage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (editingTrip) {
             setName(editingTrip.name);
-            setSelectedIcon(editingTrip.icon || 'plane');
+            setSelectedIcon(editingTrip.icon || defaultIcon);
             setCustomImage(editingTrip.customImage || null);
         } else {
             setName('');
-            setSelectedIcon('plane');
+            setSelectedIcon(defaultIcon);
             setCustomImage(null);
         }
-    }, [editingTrip, isOpen]);
+    }, [editingTrip, isOpen, defaultIcon]);
 
     const handleSave = async () => {
         if (!name) return;
@@ -59,7 +61,7 @@ const AddTripModal = ({ isOpen, onClose, onSave, editingTrip }: AddTripModalProp
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={editingTrip ? "Edit Trip" : "Create New Trip"}>
+        <Modal isOpen={isOpen} onClose={onClose} title={title || (editingTrip ? "Edit Trip" : "Create New Trip")}>
             <div className="space-y-6">
                 <Input
                     label="Trip Name"
@@ -110,7 +112,7 @@ const AddTripModal = ({ isOpen, onClose, onSave, editingTrip }: AddTripModalProp
                         </div>
                     )}
                 </div>
-                <Button onClick={handleSave} className="w-full py-4 text-lg" isLoading={isLoading}> {editingTrip ? "Save Changes" : "Create Trip"} </Button>
+                <Button onClick={handleSave} className="w-full py-4 text-lg" isLoading={isLoading}> {editingTrip ? "Save Changes" : (title?.includes('Event') ? "Create Event" : "Create Trip")} </Button>
             </div>
         </Modal>
     );

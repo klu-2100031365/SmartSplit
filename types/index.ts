@@ -36,6 +36,7 @@ export interface Trip {
     customImage?: string;
     shareToken?: string;
     sharePermission?: SharePermission;
+    type?: 'trip' | 'dining';
 }
 
 export interface ChangeLog {
