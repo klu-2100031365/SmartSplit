@@ -2,7 +2,7 @@
 
 import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PieChart, Users, Receipt, Plane, Plus, Wallet, Utensils } from 'lucide-react';
+import { PieChart, Users, Receipt, Plane, Plus, Wallet, Utensils, Film } from 'lucide-react';
 import { AuthContext, CurrencyContext } from '../../context/AppContext';
 import { api } from '../../lib/utils';
 import { formatAmount } from '../../lib/formatters';
@@ -85,17 +85,18 @@ const Dashboard = () => {
                             icon={Utensils}
                             onClick={() => router.push('/dining')}
                         />
-                        {
-                            ['Movies', 'Play'].map((item, i) => (
-                                <ModuleCard
-                                    key={i}
-                                    title={item}
-                                    desc="Coming soon"
-                                    icon={Plus}
-                                    disabled
-                                />
-                            ))
-                        }
+                        <ModuleCard
+                            title="Movies"
+                            desc="Cinema & events"
+                            icon={Film}
+                            onClick={() => router.push('/movies')}
+                        />
+                        <ModuleCard
+                            title="Play"
+                            desc="Coming soon"
+                            icon={Plus}
+                            disabled
+                        />
                     </div>
                 </div>
             </div>

@@ -146,12 +146,18 @@ class MockBackend {
         return tasks.reverse();
     }
 
+    async getMovieEvents(userId: string): Promise<Trip[]> {
+        const trips = this.get<Trip>('trips');
+        const tasks = trips.filter(t => t.ownerId === userId && t.type === 'movies');
+        return tasks.reverse();
+    }
+
     async deleteTrip(userId: string, tripId: string): Promise<void> {
         const trips = this.get<Trip>('trips');
         this.set('trips', trips.filter(t => !(t.id === tripId && t.ownerId === userId)));
     }
 
-    async createTrip(userId: string, name: string, icon: string = 'plane', customImage?: string, type: 'trip' | 'dining' = 'trip'): Promise<Trip> {
+    async createTrip(userId: string, name: string, icon: string = 'plane', customImage?: string, type: 'trip' | 'dining' | 'movies' = 'trip'): Promise<Trip> {
         await new Promise(r => setTimeout(r, 600));
         const trips = this.get<Trip>('trips');
         const newTrip: Trip = {
@@ -627,7 +633,7 @@ class MockBackend {
         }
 
         // 2. Process Other Modules
-        ['dining', 'play', 'entertainment', 'investments'].forEach(source => {
+        ['dining', 'movies', 'play', 'entertainment', 'investments'].forEach(source => {
             if (sources.includes(source)) {
                 const mockKey = `${source}_expenses`;
                 // Force empty for now to avoid legacy/seeder data (like the 1650 value) persisting
