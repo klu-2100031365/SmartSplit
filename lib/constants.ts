@@ -3,6 +3,8 @@ import {
     Pizza, Coffee, HelpCircle, ShoppingBag, Wallet, Sun, Moon, Wine,
     MoreHorizontal
 } from 'lucide-react';
+
+
 import { Currency } from '../types';
 
 export const CURRENCIES: Record<Currency, string> = {
