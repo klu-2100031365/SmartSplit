@@ -36,7 +36,7 @@ export interface Trip {
     customImage?: string;
     shareToken?: string;
     sharePermission?: SharePermission;
-    type?: 'trip' | 'dining';
+    type?: 'trip' | 'dining' | 'movies';
 }
 
 export interface ChangeLog {
@@ -79,6 +79,6 @@ export interface DailyExpense {
     paymentMethod: 'Cash' | 'Card' | 'UPI' | 'Net Banking' | 'Other';
     notes?: string;
     sourceId?: string;
-    sourceType?: 'trip' | 'dining' | 'play' | 'entertainment' | 'investments' | 'manual';
+    sourceType?: 'trip' | 'dining' | 'movies' | 'play' | 'entertainment' | 'investments' | 'manual';
     metadata?: any;
 }
