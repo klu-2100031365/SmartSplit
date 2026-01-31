@@ -36,7 +36,7 @@ export interface Trip {
     customImage?: string;
     shareToken?: string;
     sharePermission?: SharePermission;
-    type?: 'trip' | 'dining' | 'movies';
+    type?: 'trip' | 'dining' | 'movies' | 'play';
 }
 
 export interface ChangeLog {
@@ -81,4 +81,35 @@ export interface DailyExpense {
     sourceId?: string;
     sourceType?: 'trip' | 'dining' | 'movies' | 'play' | 'entertainment' | 'investments' | 'manual';
     metadata?: any;
+}
+
+export type RecurringItemKind = 'bill' | 'subscription';
+
+export type RecurringItemCategory =
+    | 'wifi'
+    | 'electricity'
+    | 'water'
+    | 'mobile'
+    | 'rent'
+    | 'emi'
+    | 'insurance'
+    | 'netflix'
+    | 'prime'
+    | 'spotify'
+    | 'hotstar'
+    | 'youtube'
+    | 'other';
+
+export interface RecurringItem {
+    id: string;
+    userId: string;
+    name: string;
+    kind: RecurringItemKind;
+    category: RecurringItemCategory;
+    amount: number;
+    dueDay: number;
+    reminderDaysBefore: number;
+    autoPayEnabled: boolean;
+    isActive: boolean;
+    notes?: string;
 }

@@ -1,4 +1,4 @@
-import { UserData, Trip, Participant, Expense, ChangeLog, SharePermission, Settlement, DailyExpense, DailyCategory } from '../types';
+import { UserData, Trip, Participant, Expense, ChangeLog, SharePermission, Settlement, DailyExpense, DailyCategory, RecurringItem } from '../types';
 
 export const generateId = () => Math.random().toString(36).substring(2, 15);
 
@@ -152,12 +152,18 @@ class MockBackend {
         return tasks.reverse();
     }
 
+    async getPlayEvents(userId: string): Promise<Trip[]> {
+        const trips = this.get<Trip>('trips');
+        const tasks = trips.filter(t => t.ownerId === userId && t.type === 'play');
+        return tasks.reverse();
+    }
+
     async deleteTrip(userId: string, tripId: string): Promise<void> {
         const trips = this.get<Trip>('trips');
         this.set('trips', trips.filter(t => !(t.id === tripId && t.ownerId === userId)));
     }
 
-    async createTrip(userId: string, name: string, icon: string = 'plane', customImage?: string, type: 'trip' | 'dining' | 'movies' = 'trip'): Promise<Trip> {
+    async createTrip(userId: string, name: string, icon: string = 'plane', customImage?: string, type: 'trip' | 'dining' | 'movies' | 'play' = 'trip'): Promise<Trip> {
         await new Promise(r => setTimeout(r, 600));
         const trips = this.get<Trip>('trips');
         const newTrip: Trip = {
@@ -373,6 +379,60 @@ class MockBackend {
         });
 
         return userShares;
+    }
+
+    async getRecurringItems(userId: string): Promise<RecurringItem[]> {
+        const items = this.get<RecurringItem>('recurring_items');
+        const userItems = items.filter(i => i.userId === userId);
+
+        if (userItems.length === 0) {
+            const defaults: Omit<RecurringItem, 'id'>[] = [
+                { userId, name: 'WiFi', kind: 'bill', category: 'wifi', amount: 0, dueDay: 5, reminderDaysBefore: 2, autoPayEnabled: false, isActive: true },
+                { userId, name: 'Electricity', kind: 'bill', category: 'electricity', amount: 0, dueDay: 10, reminderDaysBefore: 2, autoPayEnabled: false, isActive: true },
+                { userId, name: 'Rent', kind: 'bill', category: 'rent', amount: 0, dueDay: 1, reminderDaysBefore: 3, autoPayEnabled: false, isActive: true },
+                { userId, name: 'Netflix', kind: 'subscription', category: 'netflix', amount: 0, dueDay: 15, reminderDaysBefore: 1, autoPayEnabled: false, isActive: true },
+                { userId, name: 'Prime', kind: 'subscription', category: 'prime', amount: 0, dueDay: 20, reminderDaysBefore: 1, autoPayEnabled: false, isActive: true },
+                { userId, name: 'Spotify', kind: 'subscription', category: 'spotify', amount: 0, dueDay: 25, reminderDaysBefore: 1, autoPayEnabled: false, isActive: true }
+            ];
+
+            const seeded: RecurringItem[] = defaults.map(d => ({ ...d, id: generateId() }));
+            this.set('recurring_items', [...items, ...seeded]);
+            return seeded;
+        }
+
+        return userItems
+            .slice()
+            .sort((a, b) => {
+                if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+                if (a.kind !== b.kind) return a.kind.localeCompare(b.kind);
+                if (a.dueDay !== b.dueDay) return a.dueDay - b.dueDay;
+                return a.name.localeCompare(b.name);
+            });
+    }
+
+    async addRecurringItem(userId: string, data: Omit<RecurringItem, 'id' | 'userId'>): Promise<RecurringItem> {
+        await new Promise(r => setTimeout(r, 400));
+        const items = this.get<RecurringItem>('recurring_items');
+        const newItem: RecurringItem = { ...data, id: generateId(), userId };
+        items.push(newItem);
+        this.set('recurring_items', items);
+        return newItem;
+    }
+
+    async updateRecurringItem(userId: string, itemId: string, data: Partial<Omit<RecurringItem, 'id' | 'userId'>>): Promise<void> {
+        await new Promise(r => setTimeout(r, 250));
+        const items = this.get<RecurringItem>('recurring_items');
+        const idx = items.findIndex(i => i.id === itemId && i.userId === userId);
+        if (idx !== -1) {
+            items[idx] = { ...items[idx], ...data };
+            this.set('recurring_items', items);
+        }
+    }
+
+    async deleteRecurringItem(userId: string, itemId: string): Promise<void> {
+        await new Promise(r => setTimeout(r, 250));
+        const items = this.get<RecurringItem>('recurring_items');
+        this.set('recurring_items', items.filter(i => !(i.id === itemId && i.userId === userId)));
     }
 
     // Daily Expenses
