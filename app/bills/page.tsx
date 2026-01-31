@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Bell, CreditCard, Pencil, Plus, Trash2 } from 'lucide-react';
 import { AuthContext, CurrencyContext } from '../../context/AppContext';
@@ -9,23 +9,10 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import AddRecurringItemModal from '../../components/modals/AddRecurringItemModal';
-import { api } from '../../lib/utils';
+import { api } from '../../lib/api';
+import { RecurringOverview } from '../../lib/api/types';
 import { formatAmount } from '../../lib/formatters';
 import { RecurringItem } from '../../types';
-
-function getNextDueDate(dueDay: number, now: Date) {
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    const today = now.getDate();
-
-    const safeDayThisMonth = Math.min(dueDay, new Date(y, m + 1, 0).getDate());
-    const thisMonthDue = new Date(y, m, safeDayThisMonth);
-
-    if (safeDayThisMonth >= today) return thisMonthDue;
-
-    const safeDayNextMonth = Math.min(dueDay, new Date(y, m + 2, 0).getDate());
-    return new Date(y, m + 1, safeDayNextMonth);
-}
 
 export default function BillsPage() {
     const { user } = useContext(AuthContext);
@@ -33,6 +20,8 @@ export default function BillsPage() {
     const router = useRouter();
 
     const [items, setItems] = useState<RecurringItem[]>([]);
+    const [monthlyTotals, setMonthlyTotals] = useState({ bills: 0, subs: 0, total: 0 });
+    const [upcoming, setUpcoming] = useState<{ item: RecurringItem, due: Date, daysUntilDue: number, reminderDate: Date, daysUntilReminder: number }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingItem, setEditingItem] = useState<RecurringItem | undefined>(undefined);
@@ -40,41 +29,26 @@ export default function BillsPage() {
     const refresh = () => {
         if (!user) return;
         setIsLoading(true);
-        api.getRecurringItems(user.id)
-            .then(setItems)
+        api.getRecurringOverview(user.id)
+            .then((overview: RecurringOverview) => {
+                setItems(overview.items);
+                setMonthlyTotals(overview.monthlyTotals);
+                setUpcoming(
+                    overview.upcoming.map((u) => ({
+                        item: u.item,
+                        due: new Date(u.dueDate),
+                        daysUntilDue: u.daysUntilDue,
+                        reminderDate: new Date(u.reminderDate),
+                        daysUntilReminder: u.daysUntilReminder
+                    }))
+                );
+            })
             .finally(() => setIsLoading(false));
     };
 
     useEffect(() => {
         refresh();
     }, [user]);
-
-    const monthlyTotals = useMemo(() => {
-        const active = items.filter(i => i.isActive);
-        const bills = active.filter(i => i.kind === 'bill').reduce((sum, i) => sum + (i.amount || 0), 0);
-        const subs = active.filter(i => i.kind === 'subscription').reduce((sum, i) => sum + (i.amount || 0), 0);
-        return {
-            bills,
-            subs,
-            total: bills + subs
-        };
-    }, [items]);
-
-    const upcoming = useMemo(() => {
-        const now = new Date();
-        return items
-            .filter(i => i.isActive)
-            .map(i => {
-                const due = getNextDueDate(i.dueDay, now);
-                const daysUntilDue = Math.ceil((due.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / (24 * 60 * 60 * 1000));
-                const reminderDate = new Date(due);
-                reminderDate.setDate(reminderDate.getDate() - (i.reminderDaysBefore || 0));
-                const daysUntilReminder = Math.ceil((reminderDate.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / (24 * 60 * 60 * 1000));
-                return { item: i, due, daysUntilDue, reminderDate, daysUntilReminder };
-            })
-            .sort((a, b) => a.due.getTime() - b.due.getTime())
-            .slice(0, 6);
-    }, [items]);
 
     const handleSave = async (data: Omit<RecurringItem, 'id' | 'userId'>) => {
         if (!user) return;

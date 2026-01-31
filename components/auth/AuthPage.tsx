@@ -4,7 +4,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Mail, Lock, Eye, EyeOff, X } from 'lucide-react';
 import { AuthContext } from '../../context/AppContext';
-import { api } from '../../lib/utils';
+import { api } from '../../lib/api';
 import Card from '../ui/Card';
 import Input from '../ui/Input';
 import Button from '../ui/Button';

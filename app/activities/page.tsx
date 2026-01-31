@@ -34,19 +34,19 @@ const ActivitiesPage = () => {
                             title="Dining"
                             desc="Food & drinks"
                             icon={Utensils}
-                            onClick={() => router.push('/dining')}
+                            onClick={() => router.push('/activities/dining')}
                         />
                         <ModuleCard
                             title="Movies"
                             desc="Cinema & events"
                             icon={Film}
-                            onClick={() => router.push('/movies')}
+                            onClick={() => router.push('/activities/movies')}
                         />
                         <ModuleCard
                             title="Play & Chill"
                             desc="Sports, games & fun"
                             icon={Gamepad2}
-                            onClick={() => router.push('/play')}
+                            onClick={() => router.push('/activities/play')}
                         />
                     </div>
                 </div>

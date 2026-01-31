@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useContext, useState, useEffect, useMemo } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Users, Receipt, Clock, Share2, Plus, MoreVertical, Edit2, Trash2, CheckCircle, ArrowRight, ChevronUp, ChevronDown, Wallet, PieChart, BarChart3, Sparkles } from 'lucide-react';
 import { AuthContext, CurrencyContext } from '../../context/AppContext';
-import { api, calculateSettlements } from '../../lib/utils';
+import { api } from '../../lib/api';
 import { getCategoryStyles } from '../../lib/constants';
 import { formatAmount, formatDateWithDay } from '../../lib/formatters';
 import { Trip, Participant, Expense, ChangeLog, Settlement, SharePermission } from '../../types';
+import { TripDetailsView } from '../../lib/api/types';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
@@ -82,7 +83,7 @@ const PayerRow = ({ p, i, symbol, totalTripCost, shareAmount }: { p: { id: strin
 const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isSharedView?: boolean }) => {
     const { user, guestName } = useContext(AuthContext);
     const { symbol } = useContext(CurrencyContext);
-    const [data, setData] = useState<{ trip: Trip, participants: Participant[], expenses: Expense[], logs: ChangeLog[] } | null>(null);
+    const [data, setData] = useState<TripDetailsView | null>(null);
     const [activeTab, setActiveTab] = useState<'expenses' | 'settlements' | 'analytics'>('expenses');
 
     const [showAddPart, setShowAddPart] = useState(false);
@@ -109,174 +110,12 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
 
     useEffect(refresh, [tripId]);
 
-    const settlementData = useMemo(() => {
-        if (!data) return {
-            settlements: [] as Settlement[],
-            stats: {} as Record<string, { paid: number, share: number, received: number }>,
-            balances: {} as Record<string, number>
-        };
-        return calculateSettlements(data.participants, data.expenses);
-    }, [data]);
-
-    const dailyBalances = useMemo((): { date: string, balances: Record<string, number> }[] => {
-        if (!data) return [];
-
-        const sortedExpenses = [...data.expenses]
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-        const balancesByDate: { date: string, balances: Record<string, number> }[] = [];
-        const runningBalances: Record<string, number> = {};
-
-        data.participants.forEach(p => runningBalances[p.id] = 0);
-
-        const expensesByDate: Record<string, Expense[]> = {};
-        sortedExpenses.forEach(exp => {
-            const dateKey = exp.date ? exp.date.split('T')[0] : 'Unknown';
-            if (!expensesByDate[dateKey]) expensesByDate[dateKey] = [];
-            expensesByDate[dateKey].push(exp);
-        });
-
-        const sortedDates = Object.keys(expensesByDate).sort();
-
-        sortedDates.forEach(date => {
-            const daysExpenses = expensesByDate[date];
-
-            daysExpenses.forEach(exp => {
-                const amount = exp.amount || 0;
-                const splitAmong = exp.splitAmong || [];
-                const splitCount = splitAmong.length;
-
-                if (splitCount === 0) return;
-
-                if (exp.paidBy) {
-                    runningBalances[exp.paidBy] = (runningBalances[exp.paidBy] || 0) + amount;
-                }
-
-                const splitAmount = amount / splitCount;
-                splitAmong.forEach(pid => {
-                    runningBalances[pid] = (runningBalances[pid] || 0) - splitAmount;
-                });
-            });
-
-            balancesByDate.push({
-                date,
-                balances: { ...runningBalances }
-            });
-        });
-
-        return balancesByDate.reverse();
-    }, [data]);
-
-    const groupedExpenses = useMemo(() => {
-        if (!data) return [];
-        const groups: Record<string, Expense[]> = {};
-        data.expenses.filter(e => !e.isPayment).forEach(exp => {
-            const dateKey = exp.date ? exp.date.split('T')[0] : 'Unknown';
-            if (!groups[dateKey]) groups[dateKey] = [];
-            groups[dateKey].push(exp);
-        });
-        return Object.entries(groups).sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime());
-    }, [data]);
-
-    const analyticsData = useMemo(() => {
-        if (!data) return { participantStats: [], dailyStats: [], categoryStats: [], totalTripCost: 0, totalPayerStats: [], individualShareStats: [] };
-
-        const totalTripCost = data.expenses.filter(e => !e.isPayment).reduce((acc, curr) => acc + (curr.amount || 0), 0);
-
-        const pStats = data.participants.map(p => {
-            const share = settlementData.stats[p.id]?.share || 0;
-            return {
-                label: p.name,
-                value: share,
-                color: ['#4ADE80', '#60A5FA', '#FB923C', '#A78BFA', '#F472B6', '#FACC15'][data.participants.indexOf(p) % 6]
-            };
-        });
-        const dStats = groupedExpenses.map(([date, exps]) => ({
-            label: new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
-            value: exps.filter(e => !e.isPayment).reduce((acc, curr) => acc + (curr.amount || 0), 0)
-        })).reverse();
-
-        const cStats: Record<string, { total: number, involved: Record<string, number> }> = {};
-        data.expenses.filter(e => !e.isPayment).forEach(exp => {
-            if (!cStats[exp.category]) cStats[exp.category] = { total: 0, involved: {} };
-            const amount = exp.amount || 0;
-            cStats[exp.category].total += amount;
-
-            const splitAmong = exp.splitAmong || [];
-            const shareAmount = amount / Math.max(splitAmong.length, 1);
-
-            splitAmong.forEach(pid => {
-                const pName = data.participants.find(p => p.id === pid)?.name || 'Unknown';
-                if (!cStats[exp.category].involved[pName]) cStats[exp.category].involved[pName] = 0;
-                cStats[exp.category].involved[pName] += shareAmount;
-            });
-        });
-
-        const cStatsArray = Object.entries(cStats).map(([cat, stat]) => ({
-            category: cat,
-            total: stat.total,
-            involved: stat.involved
-        })).sort((a, b) => b.total - a.total);
-
-        const totalPayerStats = data.participants.map(p => {
-            const paid = settlementData.stats[p.id]?.paid || 0;
-            const personCatBreakdown: Record<string, number> = {};
-            data.expenses.filter(e => !e.isPayment && e.paidBy === p.id).forEach(exp => {
-                personCatBreakdown[exp.category] = (personCatBreakdown[exp.category] || 0) + (exp.amount || 0);
-            });
-            return {
-                id: p.id,
-                name: p.name,
-                amount: paid,
-                categories: Object.entries(personCatBreakdown).sort((a, b) => b[1] - a[1])
-            };
-        }).sort((a, b) => b.amount - a.amount);
-
-        const shareStats: Record<string, { total: number, categories: Record<string, number> }> = {};
-        data.participants.forEach(p => {
-            shareStats[p.id] = { total: 0, categories: {} };
-        });
-
-        data.expenses.filter(e => !e.isPayment).forEach(exp => {
-            const splitCount = (exp.splitAmong || []).length;
-            if (splitCount === 0) return;
-            const shareAmount = (exp.amount || 0) / splitCount;
-
-            (exp.splitAmong || []).forEach(pid => {
-                if (shareStats[pid]) {
-                    shareStats[pid].total += shareAmount;
-                    shareStats[pid].categories[exp.category] = (shareStats[pid].categories[exp.category] || 0) + shareAmount;
-                }
-            });
-        });
-
-        const individualShareStats = data.participants.map(p => {
-            const stat = shareStats[p.id];
-            return {
-                participant: p,
-                total: stat.total,
-                categories: Object.entries(stat.categories).sort((a, b) => b[1] - a[1])
-            };
-        }).sort((a, b) => b.total - a.total);
-
-        return { participantStats: pStats, dailyStats: dStats, categoryStats: cStatsArray, totalTripCost, totalPayerStats, individualShareStats };
-    }, [data, settlementData, groupedExpenses]);
-
-    const userParticipant = useMemo(() => {
-        if (!data || !user) return null;
-        return data.participants.find(p => p.name.trim().toLowerCase() === user.name.trim().toLowerCase());
-    }, [data, user]);
-
-    const userShare = useMemo(() => {
-        if (!userParticipant || !settlementData) return 0;
-        return settlementData.stats[userParticipant.id]?.share || 0;
-    }, [userParticipant, settlementData]);
-
-
     if (!data) return <div className="min-h-screen flex items-center justify-center text-gray-500 dark:text-gray-400 text-lg"> Loading trip details...</div>;
 
+    const { settlementData, dailyBalances, groupedExpenses, analyticsData, userShare } = data;
+
     const isOwner = user?.id === data.trip.ownerId;
-    const canEdit = isOwner || (!isSharedView) || (isSharedView && data.trip.sharePermission === 'edit');
+    const canEdit = isOwner || (isSharedView && data.trip.sharePermission === 'edit');
     const actor = user ? { id: user.id, name: user.name } : { id: 'guest', name: guestName || 'Guest' };
 
     const handleShareGenerate = async (perm: SharePermission) => {

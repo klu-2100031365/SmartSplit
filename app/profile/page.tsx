@@ -4,7 +4,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Mail, History } from 'lucide-react';
 import { AuthContext, CurrencyContext } from '../../context/AppContext';
-import { api } from '../../lib/utils';
+import { api } from '../../lib/api';
 import { getCategoryStyles } from '../../lib/constants';
 import { formatAmount, formatDateWithDay } from '../../lib/formatters';
 import { Trip, Expense } from '../../types';
