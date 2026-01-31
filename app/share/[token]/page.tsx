@@ -3,7 +3,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AuthContext } from '../../../context/AppContext';
-import { api } from '../../../lib/utils';
+import { api } from '../../../lib/api';
 import TripDetail from '../../../components/trips/TripDetail';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
@@ -22,7 +22,10 @@ const SharedTripHandler = () => {
     useEffect(() => {
         api.getTripByShareToken(token)
             .then(setTripData)
-            .catch(e => setError(e.message))
+            .catch((e: unknown) => {
+                const err = e as Error;
+                setError(err.message);
+            })
             .finally(() => setLoading(false));
     }, [token]);
 

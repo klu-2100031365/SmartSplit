@@ -4,7 +4,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PieChart, Users, Receipt, Plane, Wallet, Sparkles, TrendingUp, CreditCard } from 'lucide-react';
 import { AuthContext, CurrencyContext } from '../../context/AppContext';
-import { api } from '../../lib/utils';
+import { api } from '../../lib/api';
 import { formatAmount } from '../../lib/formatters';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext, useState, useEffect, useMemo } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
     Wallet,
     PieChart,
@@ -29,7 +29,8 @@ import {
     Film
 } from 'lucide-react';
 import { AuthContext, ThemeContext, CurrencyContext } from '../../context/AppContext';
-import { api } from '../../lib/utils';
+import { api } from '../../lib/api';
+import { DailyStats } from '../../lib/api/types';
 import { DailyExpense, DailyCategory } from '../../types';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -45,6 +46,7 @@ export default function DailyExpensesPage() {
     const { symbol } = useContext(CurrencyContext);
     const [expenses, setExpenses] = useState<DailyExpense[]>([]);
     const [categories, setCategories] = useState<DailyCategory[]>([]);
+    const [stats, setStats] = useState<DailyStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [monthlySalary, setMonthlySalary] = useState<number>(0);
@@ -62,11 +64,13 @@ export default function DailyExpensesPage() {
             Promise.all([
                 api.getDailyExpenses(user.id),
                 api.getDailyCategories(user.id),
-                api.getMonthlySalary(user.id)
-            ]).then(([expList, catList, salary]) => {
+                api.getMonthlySalary(user.id),
+                api.getDailyStats(user.id)
+            ]).then(([expList, catList, salary, dailyStats]) => {
                 setExpenses(expList);
                 setCategories(catList);
                 setMonthlySalary(salary || 0);
+                setStats(dailyStats);
                 setIsLoading(false);
             });
         }
@@ -74,25 +78,17 @@ export default function DailyExpensesPage() {
 
     useEffect(refresh, [user]);
 
-    const stats = useMemo(() => {
-        const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
-        const thisMonth = new Date().getMonth();
-        const thisYear = new Date().getFullYear();
-
-        const monthlySpent = expenses
-            .filter(e => {
-                const d = new Date(e.date);
-                return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-            })
-            .reduce((sum, e) => sum + e.amount, 0);
-
-        const categoryBreakdown = expenses.reduce((acc, e) => {
-            acc[e.categoryId] = (acc[e.categoryId] || 0) + e.amount;
-            return acc;
-        }, {} as Record<string, number>);
-
-        return { totalSpent, monthlySpent, categoryBreakdown };
-    }, [expenses]);
+    const viewStats: DailyStats = stats || {
+        totalSpent: 0,
+        monthlySpent: 0,
+        avgDaily: 0,
+        categoryBreakdown: {},
+        categoryBreakdownItems: [],
+        spentVsSalaryPercent: 0,
+        salaryStatus: 'safe',
+        salaryMessage: '',
+        remainingSalary: 0
+    };
 
     const filteredExpenses = expenses.filter(e =>
         e.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -243,7 +239,7 @@ export default function DailyExpensesPage() {
                         </div>
                         <span className="font-bold opacity-90">Total Spent</span>
                     </div>
-                    <p className="text-3xl font-extrabold">{symbol}{formatAmount(stats.totalSpent)}</p>
+                    <p className="text-3xl font-extrabold">{symbol}{formatAmount(viewStats.totalSpent)}</p>
                 </Card>
 
                 <Card>
@@ -253,7 +249,7 @@ export default function DailyExpensesPage() {
                         </div>
                         <span className="font-bold text-gray-600 dark:text-gray-400">This Month</span>
                     </div>
-                    <p className="text-3xl font-extrabold text-gray-900 dark:text-white">{symbol}{formatAmount(stats.monthlySpent)}</p>
+                    <p className="text-3xl font-extrabold text-gray-900 dark:text-white">{symbol}{formatAmount(viewStats.monthlySpent)}</p>
                 </Card>
 
                 <Card>
@@ -264,7 +260,7 @@ export default function DailyExpensesPage() {
                         <span className="font-bold text-gray-600 dark:text-gray-400">Avg. Daily</span>
                     </div>
                     <p className="text-3xl font-extrabold text-gray-900 dark:text-white">
-                        {symbol}{formatAmount(stats.monthlySpent / 30)}
+                        {symbol}{formatAmount(viewStats.avgDaily)}
                     </p>
                 </Card>
             </div>
@@ -387,20 +383,20 @@ export default function DailyExpensesPage() {
                 <div className="space-y-6">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">Breakdown</h3>
                     <Card className="space-y-6">
-                        {Object.entries(stats.categoryBreakdown)
-                            .sort((a, b) => b[1] - a[1])
-                            .map(([catId, amount]) => {
+                        {(viewStats.categoryBreakdownItems || [])
+                            .map(({ categoryId: catId, amount, percentage }) => {
                                 const category = categories.find(c => c.id === catId);
-                                const percentage = (amount / stats.totalSpent) * 100;
                                 return (
                                     <div key={catId} className="space-y-2">
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="font-bold text-gray-700 dark:text-gray-300">{category?.name || 'Unknown'}</span>
-                                            <span className="font-bold text-gray-900 dark:text-white">{symbol}{formatAmount(amount)}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-gray-700 dark:text-gray-300">{category?.name || 'Unknown'}</span>
+                                                <span className="font-black text-gray-900 dark:text-white">{symbol}{formatAmount(amount)}</span>
+                                            </div>
                                         </div>
-                                        <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                             <div
-                                                className={`h-full bg-brand-blue transition-all duration-500`}
+                                                className="h-full bg-brand-blue rounded-full transition-all"
                                                 style={{ width: `${percentage}%` }}
                                             />
                                         </div>
@@ -408,7 +404,7 @@ export default function DailyExpensesPage() {
                                 );
                             })
                         }
-                        {Object.keys(stats.categoryBreakdown).length === 0 && (
+                        {(viewStats.categoryBreakdownItems || []).length === 0 && (
                             <p className="text-sm text-gray-400 text-center py-10">No spending data</p>
                         )}
                     </Card>
@@ -427,15 +423,15 @@ export default function DailyExpensesPage() {
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm font-bold text-gray-500">Spent vs. Salary</span>
                                         <span className="text-sm font-black text-gray-900 dark:text-white">
-                                            {((stats.monthlySpent / monthlySalary) * 100).toFixed(0)}%
+                                            {(viewStats.spentVsSalaryPercent || 0).toFixed(0)}%
                                         </span>
                                     </div>
                                     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                         <div
-                                            className={`h-full transition-all duration-1000 ${(stats.monthlySpent / monthlySalary) > 0.7 ? 'bg-red-500' :
-                                                (stats.monthlySpent / monthlySalary) > 0.4 ? 'bg-brand-orange' : 'bg-brand-green'
+                                            className={`h-full transition-all duration-1000 ${viewStats.salaryStatus === 'overspending' ? 'bg-red-500' :
+                                                viewStats.salaryStatus === 'caution' ? 'bg-brand-orange' : 'bg-brand-green'
                                                 }`}
-                                            style={{ width: `${Math.min((stats.monthlySpent / monthlySalary) * 100, 100)}%` }}
+                                            style={{ width: `${Math.min((viewStats.spentVsSalaryPercent || 0), 100)}%` }}
                                         />
                                     </div>
                                 </div>
@@ -444,26 +440,22 @@ export default function DailyExpensesPage() {
                                     <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
                                         <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Remaining</p>
                                         <p className="text-lg font-black text-gray-900 dark:text-white">
-                                            {symbol}{formatAmount(Math.max(monthlySalary - stats.monthlySpent, 0))}
+                                            {symbol}{formatAmount(viewStats.remainingSalary || 0)}
                                         </p>
                                     </div>
                                     <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
                                         <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Status</p>
-                                        <p className={`text-sm font-black ${(stats.monthlySpent / monthlySalary) > 0.7 ? 'text-red-500' : (stats.monthlySpent / monthlySalary) > 0.4 ? 'text-brand-orange' : 'text-brand-green'}`}>
-                                            {(stats.monthlySpent / monthlySalary) > 0.7 ? 'Overspending' : (stats.monthlySpent / monthlySalary) > 0.4 ? 'Caution' : 'Safe Zone'}
+                                        <p className={`text-sm font-black ${viewStats.salaryStatus === 'overspending' ? 'text-red-500' : viewStats.salaryStatus === 'caution' ? 'text-brand-orange' : 'text-brand-green'}`}>
+                                            {viewStats.salaryStatus === 'overspending' ? 'Overspending' : viewStats.salaryStatus === 'caution' ? 'Caution' : 'Safe Zone'}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className={`p-4 rounded-2xl border ${(stats.monthlySpent / monthlySalary) > 0.7 ? 'bg-red-50 border-red-100 text-red-700' : 'bg-brand-blue/5 border-brand-blue/10 text-brand-blue'}`}>
+                                <div className={`p-4 rounded-2xl border ${viewStats.salaryStatus === 'overspending' ? 'bg-red-50 border-red-100 text-red-700' : 'bg-brand-blue/5 border-brand-blue/10 text-brand-blue'}`}>
                                     <div className="flex gap-3">
                                         <TrendingUp size={16} className="shrink-0 mt-0.5" />
                                         <p className="text-xs font-bold leading-relaxed">
-                                            {(stats.monthlySpent / monthlySalary) > 0.7
-                                                ? "You've spent more than 70% of your salary. We suggest cutting down on non-essential expenses."
-                                                : (stats.monthlySpent / monthlySalary) > 0.4
-                                                    ? "You're in the caution zone. Keep track of your upcoming bills and try to save more this month."
-                                                    : "Great job! Your spending is well within the safe zone. You're doing excellent with your finances!"}
+                                            {viewStats.salaryMessage || ''}
                                         </p>
                                     </div>
                                 </div>
