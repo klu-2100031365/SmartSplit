@@ -14,9 +14,9 @@ const CurrencyConverterModal = ({ isOpen, onClose }: { isOpen: boolean, onClose:
 
     const rates: Record<Currency, number> = {
         USD: 1,
-        INR: 84.1,
-        EUR: 0.92,
-        GBP: 0.77,
+        INR: 91.1,
+        EUR: 1,
+        GBP: 1,
         AED: 3.67
     };
 
