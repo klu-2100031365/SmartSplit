@@ -1,0 +1,69 @@
+"use client";
+
+import React from 'react';
+import { Edit2, Trash2 } from 'lucide-react';
+import { CATEGORY_STYLES } from '../../lib/constants';
+import { formatAmount } from '../../lib/formatters';
+import Badge from '../ui/Badge';
+import { Expense, Participant } from '../../types';
+
+interface ExpenseCardProps {
+    expense: Expense;
+    participants: Participant[];
+    symbol: string;
+    canEdit: boolean;
+    onEdit: (expense: Expense) => void;
+    onDelete: (expenseId: string) => void;
+}
+
+const ExpenseCard = ({ expense, participants, symbol, canEdit, onEdit, onDelete }: ExpenseCardProps) => {
+    const style = CATEGORY_STYLES[expense.category] || CATEGORY_STYLES['Others'];
+    const Icon = style.icon;
+    const splitAmong = expense.splitAmong || [];
+    const splitNames = splitAmong.length === participants.length
+        ? 'Everyone'
+        : splitAmong.map(id => participants.find(p => p.id === id)?.name).join(', ');
+    const payerName = participants.find(p => p.id === expense.paidBy)?.name || 'Unknown';
+
+    return (
+        <div className="bg-white dark:bg-gray-800 p-5 md:p-6 rounded-3xl border border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-sm hover:shadow-lg transition-all group relative gap-4">
+            <div className="flex items-start sm:items-center gap-5">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${style.bg} ${style.color}`}>
+                    <Icon size={24} />
+                </div>
+                <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-0.5"> {expense.description} </h4>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <Badge variant="secondary" className="text-xs px-2 py-0.5"> {expense.category} </Badge>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                            paid by <span className="font-bold text-gray-800 dark:text-gray-200"> {payerName} </span>
+                        </span>
+                        <span className="text-sm text-gray-400 dark:text-gray-500 hidden sm:inline">•</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[200px] sm:max-w-none">
+                            for {splitNames}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div className="flex items-center justify-between w-full sm:auto gap-3 ml-auto sm:ml-0 pl-16 sm:pl-0">
+                <div className={`font-bold text-xl ${expense.isPayment ? 'text-brand-green' : 'text-gray-900 dark:text-white'}`}>
+                    {symbol} {formatAmount(expense.amount || 0)}
+                </div>
+                {
+                    canEdit && (
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => onEdit(expense)} className="p-2.5 text-gray-400 hover:text-brand-blue hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all">
+                                <Edit2 size={18} />
+                            </button>
+                            <button onClick={() => onDelete(expense.id)} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all">
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
+                    )
+                }
+            </div>
+        </div>
+    );
+};
+
+export default ExpenseCard;
