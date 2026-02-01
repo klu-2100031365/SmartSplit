@@ -1,0 +1,127 @@
+"use client";
+
+import React, { useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Plus, Utensils } from 'lucide-react';
+import { AuthContext, CurrencyContext } from '../../../context/AppContext';
+import { api } from '../../../lib/api';
+import { slugify } from '../../../lib/slugify';
+import { Trip } from '../../../types';
+import Button from '../../../components/ui/Button';
+import ProtectedRoute from '../../../components/auth/ProtectedRoute';
+import ActivityEventCard from '../../../components/activities/ActivityEventCard';
+import AddActivityEventModal from '../../../components/modals/AddActivityEventModal';
+
+const ActivitiesDiningPage = () => {
+    const { user } = useContext(AuthContext);
+    const { symbol } = useContext(CurrencyContext);
+    const router = useRouter();
+
+    const [events, setEvents] = useState<Trip[]>([]);
+    const [shares, setShares] = useState<Record<string, number>>({});
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const refresh = () => {
+        if (!user) return;
+        setIsLoading(true);
+        Promise.all([
+            api.getDiningEvents(user.id),
+            api.getUserTripExpenses(user.id)
+        ])
+            .then(([data, shareMap]) => {
+                setEvents(data);
+                setShares(shareMap);
+            })
+            .finally(() => setIsLoading(false));
+    };
+
+    useEffect(() => {
+        refresh();
+    }, [user]);
+
+    const handleCreateEvent = async (name: string, icon: string, image?: string) => {
+        if (!user) return;
+        try {
+            await api.createTrip(user.id, name, icon, image, 'dining');
+            refresh();
+            setIsAddModalOpen(false);
+        } catch (error) {
+            console.error('Failed to create dining event', error);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!user || !confirm('Delete this event?')) return;
+        await api.deleteTrip(user.id, id);
+        refresh();
+    };
+
+    return (
+        <ProtectedRoute>
+            <div className="relative min-h-screen">
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-blue/10 via-white to-white dark:from-brand-blue/5 dark:via-gray-900 dark:to-gray-900" />
+
+                <div className="p-4 sm:p-8 max-w-[1200px] mx-auto min-h-screen pb-24">
+                    <div className="flex items-center justify-between mb-8 gap-4">
+                        <div className="flex items-center gap-4 min-w-0">
+                            <button
+                                onClick={() => router.push('/activities')}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors shrink-0"
+                            >
+                                <ArrowLeft size={24} className="text-gray-600 dark:text-gray-300" />
+                            </button>
+                            <div className="min-w-0">
+                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Utensils className="text-brand-orange" /> Dining
+                                </h1>
+                                <p className="text-gray-500 dark:text-gray-400 text-sm">Organize shared meals & split bills</p>
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="rounded-full px-6 py-3 shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                        >
+                            <Plus size={20} /> New Dining Event
+                        </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {isLoading ? (
+                            <p className="text-center text-gray-500 py-10 col-span-full">Loading events...</p>
+                        ) : events.length === 0 ? (
+                            <div className="col-span-full text-center py-20 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">
+                                <Utensils size={64} className="mx-auto text-gray-300 dark:text-gray-600 mb-6" />
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No dining events yet</h3>
+                                <p className="text-gray-500 dark:text-gray-400 mb-8">Start a new event to track a shared meal.</p>
+                                <Button onClick={() => setIsAddModalOpen(true)}>Create First Event</Button>
+                            </div>
+                        ) : (
+                            events.map(event => (
+                                <ActivityEventCard
+                                    key={event.id}
+                                    event={event}
+                                    userShare={shares[event.id]}
+                                    symbol={symbol}
+                                    onClick={() => router.push(`/activities/dining/${slugify(event.name)}`)}
+                                    onDelete={() => handleDelete(event.id)}
+                                />
+                            ))
+                        )}
+                    </div>
+
+                    <AddActivityEventModal
+                        isOpen={isAddModalOpen}
+                        onClose={() => setIsAddModalOpen(false)}
+                        onSave={handleCreateEvent}
+                        defaultIcon="utensils"
+                        title="Create Dining Event"
+                    />
+                </div>
+            </div>
+        </ProtectedRoute>
+    );
+};
+
+export default ActivitiesDiningPage;
