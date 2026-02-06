@@ -22,6 +22,7 @@ class Trip(APIModel):
     share_token: str | None = None
     share_permission: SharePermission | None = None
     type: TripType | None = None
+    currency: str | None = "INR"
 
 
 class Participant(APIModel):
@@ -111,12 +112,14 @@ class CreateTripRequest(APIModel):
     icon: str | None = "plane"
     custom_image: str | None = None
     type: TripType | None = "trip"
+    currency: str | None = "INR"
 
 
 class UpdateTripRequest(APIModel):
     name: str | None = None
     icon: str | None = None
     custom_image: str | None = None
+    currency: str | None = None
 
 
 class CreateParticipantRequest(APIModel):

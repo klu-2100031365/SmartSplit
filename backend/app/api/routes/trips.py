@@ -35,9 +35,9 @@ def create_trip(payload: CreateTripRequest, _user_id: str = Depends(get_current_
         created_at=datetime.utcnow(),
         icon=payload.icon,
         custom_image=payload.custom_image,
-        share_token=None,
         share_permission=None,
         type=payload.type,
+        currency=payload.currency,
     )
 
 
@@ -63,6 +63,7 @@ def trip_view(trip_id: str, _user_id: str = Depends(get_current_user_id)) -> Tri
         share_token=None,
         share_permission=None,
         type="trip",
+        currency="INR",
     )
 
     settlement_data = SettlementSummary(settlements=[], stats={}, balances={})
