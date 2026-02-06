@@ -37,6 +37,7 @@ export interface Trip {
     shareToken?: string;
     sharePermission?: SharePermission;
     type?: 'trip' | 'dining' | 'movies' | 'play';
+    currency?: Currency;
 }
 
 export interface ChangeLog {

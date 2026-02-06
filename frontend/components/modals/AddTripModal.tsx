@@ -7,13 +7,17 @@ import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { TRIP_ICONS } from '../../lib/constants';
-import { Trip } from '../../types';
+
+import { Trip, Currency } from '../../types';
+import CurrencySelector from '../ui/CurrencySelector';
 
 interface AddTripModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (name: string, icon: string, customImage?: string) => Promise<void>;
+
+    onSave: (name: string, icon: string, customImage?: string, currency?: Currency) => Promise<void>;
     editingTrip?: Trip | null;
+
     title?: string;
     defaultIcon?: string;
 }
@@ -22,6 +26,7 @@ const AddTripModal = ({ isOpen, onClose, onSave, editingTrip, title, defaultIcon
     const [name, setName] = useState('');
     const [selectedIcon, setSelectedIcon] = useState<string>(defaultIcon);
     const [customImage, setCustomImage] = useState<string | null>(null);
+    const [currency, setCurrency] = useState<Currency>('INR');
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
@@ -29,18 +34,21 @@ const AddTripModal = ({ isOpen, onClose, onSave, editingTrip, title, defaultIcon
             setName(editingTrip.name);
             setSelectedIcon(editingTrip.icon || defaultIcon);
             setCustomImage(editingTrip.customImage || null);
+            setCurrency(editingTrip.currency || 'INR');
         } else {
             setName('');
             setSelectedIcon(defaultIcon);
             setCustomImage(null);
+            setCurrency('INR');
         }
     }, [editingTrip, isOpen, defaultIcon]);
 
     const handleSave = async () => {
         if (!name) return;
         setIsLoading(true);
+
         try {
-            await onSave(name, selectedIcon, customImage || undefined);
+            await onSave(name, selectedIcon, customImage || undefined, currency);
             onClose();
         } finally {
             setIsLoading(false);
@@ -71,6 +79,13 @@ const AddTripModal = ({ isOpen, onClose, onSave, editingTrip, title, defaultIcon
                     autoFocus
                     required
                 />
+
+                <CurrencySelector
+                    label="Currency"
+                    value={currency}
+                    onChange={setCurrency}
+                />
+
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3"> Choose Icon or Upload Image <span className="text-red-500 ml-0.5">*</span> </label>
                     <div className="mb-4">
