@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from app.schemas.common import APIModel, ChartBar, ChartSlice, ChangeLog, MoneyStats
 
@@ -126,19 +126,6 @@ class CreateParticipantRequest(APIModel):
     name: str
 
 
-class CreateExpenseRequest(APIModel):
-    expense: dict[str, Any]
-    actor: dict[str, str] | None = None
-
-
 class UpdateExpenseRequest(APIModel):
     data: dict[str, Any]
     actor: dict[str, str] | None = None
-
-
-class CreateShareLinkRequest(APIModel):
-    permission: SharePermission
-
-
-class CreateShareLinkResponse(BaseModel):
-    token: str

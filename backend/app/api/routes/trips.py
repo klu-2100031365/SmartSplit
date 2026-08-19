@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 import json
 from collections import defaultdict
 
@@ -11,8 +11,6 @@ from app.models import Trip as TripModel, Participant as ParticipantModel, Expen
 from app.schemas.trips import (
     AnalyticsData,
     CreateParticipantRequest,
-    CreateShareLinkRequest,
-    CreateShareLinkResponse,
     CreateTripRequest,
     Expense,
     Participant,
@@ -268,8 +266,6 @@ def trip_view(trip_id: str, db: Session = Depends(get_db), current_user_id: str 
         date_str = e.date.isoformat()[:10] if hasattr(e.date, 'isoformat') else str(e.date)[:10]
         groups[date_str].append(schema_exp)
 
-    sorted_groups = sorted(groups.items(), key=lambda x: x[0], reverse=True)
-
     settlement_data = calculate_settlements(participants, expenses)
     analytics = calculate_analytics(participants, expenses)
 
@@ -280,7 +276,7 @@ def trip_view(trip_id: str, db: Session = Depends(get_db), current_user_id: str 
         "logs": [],
         "settlement_data": settlement_data,
         "daily_balances": [],
-        "grouped_expenses": sorted_groups,
+        "grouped_expenses": sorted(groups.items(), key=lambda x: x[0], reverse=True),
         "analytics_data": analytics,
         "user_share": 0.0,
         "share_token": None,
