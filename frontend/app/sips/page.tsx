@@ -13,7 +13,7 @@ const SipsPage = () => {
         <ProtectedRoute>
             <div className="relative min-h-screen">
                 <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-blue/10 via-white to-white dark:from-brand-blue/5 dark:via-gray-900 dark:to-gray-900" />
-                <div className="p-4 sm:p-8 max-w-[1600px] mx-auto space-y-8 sm:space-y-12 pb-24">
+                <div className="mx-auto max-w-[1600px] space-y-8 px-4 pb-24 pt-3 sm:space-y-12 sm:px-8 sm:pt-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
                         <div className="flex items-start gap-4">
                             <button

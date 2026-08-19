@@ -2,17 +2,30 @@
 
 import React, { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { LogOut, Mail, History, ArrowRight, ArrowLeft, User, Settings, Bell, Globe, Phone, Save, Check, LayoutDashboard } from 'lucide-react';
-import ProfileChatbot from '../../components/chat/ProfileChatbot';
 import { AuthContext, CurrencyContext } from '../../context/AppContext';
 import { api } from '../../lib/api';
-import { formatAmount, formatDateWithDay } from '../../lib/formatters';
-import { TripSummary, Expense } from '../../types';
+import { formatAmount } from '../../lib/formatters';
 import ProtectedRoute from '../../components/auth/ProtectedRoute';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
+
+const ProfileChatbot = dynamic(() => import('../../components/chat/ProfileChatbot'), {
+    ssr: false,
+    loading: () => (
+        <div className="h-40 animate-pulse rounded-[28px] border border-gray-100 bg-gray-50 dark:border-white/10 dark:bg-white/5" />
+    ),
+});
+
+const DEFAULT_NOTIFS = {
+    expenseAdded: true,
+    expenseEdited: true,
+    paymentReceived: true,
+    monthlySummary: true,
+};
 
 const ProfilePage = () => {
     const { user, logout } = useContext(AuthContext);
@@ -25,8 +38,21 @@ const ProfilePage = () => {
     const [saveSuccess, setSaveSuccess] = useState(false);
 
     useEffect(() => {
-        if (user) {
-            api.getUserProfileData(user.id).then(data => {
+        if (!user) return;
+
+        setEditData((prev: any) => prev ?? {
+            name: user.name,
+            phoneNumber: '',
+            defaultCurrency: 'INR',
+            timezone: 'IST',
+            language: 'en',
+            notificationSettings: DEFAULT_NOTIFS,
+        });
+
+        let cancelled = false;
+        api.getUserProfileData(user.id)
+            .then(data => {
+                if (cancelled) return;
                 setProfileData(data);
                 setEditData({
                     name: data.name,
@@ -34,15 +60,21 @@ const ProfilePage = () => {
                     defaultCurrency: data.defaultCurrency,
                     timezone: data.timezone,
                     language: data.language,
-                    notificationSettings: data.notificationSettings || {
-                        expenseAdded: true,
-                        expenseEdited: true,
-                        paymentReceived: true,
-                        monthlySummary: true,
-                    }
+                    notificationSettings: data.notificationSettings || DEFAULT_NOTIFS,
+                });
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setProfileData({
+                    name: user.name,
+                    email: user.email,
+                    trips: [],
                 });
             });
-        }
+
+        return () => {
+            cancelled = true;
+        };
     }, [user]);
 
     const handleSave = async () => {
@@ -58,11 +90,15 @@ const ProfilePage = () => {
         }
     };
 
-    if (!user || !profileData || !editData) return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-            <div className="w-12 h-12 border-4 border-brand-blue border-t-transparent rounded-full animate-spin" />
-        </div>
+    if (!user || !editData) return (
+        <ProtectedRoute>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                <div className="w-12 h-12 border-4 border-brand-blue border-t-transparent rounded-full animate-spin" />
+            </div>
+        </ProtectedRoute>
     );
+
+    const trips = profileData?.trips || [];
 
     const toggleNotif = (key: string) => {
         setEditData({
@@ -76,7 +112,7 @@ const ProfilePage = () => {
 
     return (
         <ProtectedRoute>
-            <motion.div className="p-4 sm:p-8 max-w-6xl mx-auto pb-32">
+            <motion.div className="mx-auto max-w-6xl px-4 pb-32 pt-3 sm:px-8 sm:pt-4">
                 <button
                     type="button"
                     onClick={() => router.push('/dashboard')}
@@ -121,12 +157,12 @@ const ProfilePage = () => {
                                 </button>
                             </div>
                             <h2 className="text-3xl font-black text-gray-900 dark:text-white mt-6 mb-1">{editData.name}</h2>
-                            <p className="text-gray-500 font-bold mb-8">{profileData.email}</p>
+                            <p className="text-gray-500 font-bold mb-8">{profileData?.email || user.email}</p>
                             
                             <div className="grid grid-cols-2 gap-3 w-full">
                                 <div className="bg-white dark:bg-gray-800/50 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
                                     <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1"> Active Trips </p>
-                                    <p className="text-2xl font-black text-brand-blue">{profileData.trips.length}</p>
+                                    <p className="text-2xl font-black text-brand-blue">{trips.length}</p>
                                 </div>
                                 <div className="bg-white dark:bg-gray-800/50 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
                                     <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1"> Shared With </p>
@@ -189,7 +225,7 @@ const ProfilePage = () => {
                                 />
                                 <Input 
                                     label="Email Address" 
-                                    value={profileData.email} 
+                                    value={profileData?.email || user.email} 
                                     disabled
                                     placeholder="Your Email"
                                     leftElement={<Mail size={20} />}
@@ -248,7 +284,7 @@ const ProfilePage = () => {
                                 <History size={26} className="text-brand-blue" /> Recent Journeys
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {profileData.trips.slice(0, 4).map((trip: any) => (
+                                {trips.slice(0, 4).map((trip: any) => (
                                     <motion.div
                                         key={trip.id}
                                         whileHover={{ y: -4 }}

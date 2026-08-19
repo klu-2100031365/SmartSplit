@@ -52,7 +52,7 @@ export default function AdminPanel() {
   if (loading) return <Loader />;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#050505] text-gray-900 dark:text-white p-4 sm:p-8 transition-colors duration-500">
+    <div className="min-h-screen bg-white px-4 pb-8 pt-3 text-gray-900 transition-colors duration-500 dark:bg-[#050505] dark:text-white sm:px-8 sm:pt-4">
       <div className="max-w-6xl mx-auto">
         <header className="flex flex-col sm:flex-row justify-between items-center mb-12 gap-6">
           <div className="flex items-center gap-4">

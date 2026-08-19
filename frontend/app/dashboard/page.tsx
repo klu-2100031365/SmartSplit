@@ -49,7 +49,7 @@ const Dashboard = () => {
         <ProtectedRoute>
             <div className="relative">
                 <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-blue/10 via-white to-white dark:from-brand-blue/5 dark:via-gray-900 dark:to-gray-900" />
-                <div className="p-4 sm:p-8 pt-0 sm:pt-4 max-w-[1600px] mx-auto space-y-8 sm:space-y-12">
+                <div className="mx-auto max-w-[1600px] space-y-8 px-4 pb-8 pt-3 sm:space-y-12 sm:px-8 sm:pb-10 sm:pt-4">
                     <div className="relative overflow-hidden rounded-3xl border border-white/50 bg-white/70 p-6 sm:p-8 shadow-xl shadow-brand-blue/10 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/40">
                         <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-brand-green/20 blur-3xl dark:bg-brand-green/15" />
                         <div className="pointer-events-none absolute -left-16 -bottom-16 h-44 w-44 rounded-full bg-brand-blue/20 blur-3xl dark:bg-brand-blue/15" />

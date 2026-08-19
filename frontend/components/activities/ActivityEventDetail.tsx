@@ -109,6 +109,17 @@ const ActivityEventDetail = ({ eventId, backHref }: { eventId: string, backHref:
 
     useEffect(refresh, [eventId]);
 
+    useEffect(() => {
+        const onTab = (event: Event) => {
+            const tab = (event as CustomEvent<{ tab?: string }>).detail?.tab;
+            if (tab === 'expenses' || tab === 'settlements' || tab === 'analytics') {
+                setActiveTab(tab);
+            }
+        };
+        window.addEventListener('ss-open-tab', onTab);
+        return () => window.removeEventListener('ss-open-tab', onTab);
+    }, []);
+
     if (!data) return <div className="min-h-screen flex items-center justify-center text-gray-500 dark:text-gray-400 text-lg"> Loading event details...</div>;
 
     const { settlementData, dailyBalances, groupedExpenses, analyticsData, userShare } = data;
@@ -222,7 +233,7 @@ const ActivityEventDetail = ({ eventId, backHref }: { eventId: string, backHref:
     };
 
     return (
-        <div className="p-4 sm:p-10 max-w-[1600px] mx-auto pb-32 min-h-screen" onClick={() => setActiveMenuId(null)}>
+        <div className="mx-auto min-h-screen max-w-[1600px] px-4 pb-32 pt-3 sm:px-10 sm:pt-4" onClick={() => setActiveMenuId(null)}>
             <div className="mb-8">
                 <FlipButton
                     onClick={() => router.push(backHref)}
@@ -318,6 +329,7 @@ const ActivityEventDetail = ({ eventId, backHref }: { eventId: string, backHref:
                 {['expenses', 'settlements', 'analytics'].map((tab) => (
                     <FlipButton
                         key={tab}
+                        data-ss-tab={tab}
                         onClick={() => setActiveTab(tab as any)}
                         className={`flex-1 md:flex-none px-6 md:px-10 py-2.5 rounded-xl font-mier font-bold text-sm transition-all shrink-0 ${activeTab === tab
                             ? 'bg-brand-blue text-white shadow-md'

@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowRight, Mail, Play } from 'lucide-react';
+import { ArrowRight, Play } from 'lucide-react';
 import { FlipMotionButton } from '../ui/Text3DFlip';
+import HeroChatbot from '../chat/HeroChatbot';
 
 const HeroSection = () => {
     const router = useRouter();
     const [particles, setParticles] = useState<{ x: number; y: number; op: number; dur: number }[]>([]);
-    const [email, setEmail] = useState('');
 
     useEffect(() => {
         setParticles(
@@ -21,11 +21,6 @@ const HeroSection = () => {
             })),
         );
     }, []);
-
-    const goRegister = () => {
-        const q = email.trim() ? `?email=${encodeURIComponent(email.trim())}` : '';
-        router.push(`/register${q}`);
-    };
 
     return (
         <section className="relative z-0 bg-[#8dc6e4] pb-24 pt-28 sm:pb-32 sm:pt-32 dark:bg-[#5a8eb0]">
@@ -169,43 +164,12 @@ const HeroSection = () => {
                     initial={{ opacity: 0, scale: 0.94 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.75, duration: 0.55 }}
-                    className="mx-auto mt-14 max-w-xl sm:mt-16"
+                    className="mx-auto mt-14 max-w-md sm:mt-16"
                 >
                     <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-white/40">
-                        Start your first shared ledger
+                        Talk to SmartSplit
                     </p>
-                    <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-1.5 shadow-sm backdrop-blur-md dark:border-white/12 dark:bg-white/[0.04] sm:flex-row sm:items-center sm:rounded-full sm:pl-5">
-                        <div className="flex min-h-[3rem] flex-1 items-center gap-3 px-4 sm:px-0">
-                            <Mail className="h-5 w-5 shrink-0 text-gray-400 dark:text-white/35" aria-hidden />
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="What's your email?"
-                                className="min-w-0 flex-1 bg-transparent text-base text-gray-900 outline-none placeholder:text-gray-400 dark:text-[#f2f2ed] dark:placeholder:text-white/35"
-                                autoComplete="email"
-                            />
-                        </div>
-                        <FlipMotionButton
-                            type="button"
-                            whileTap={{ scale: 0.97 }}
-                            onClick={goRegister}
-                            className="rounded-xl bg-brand-green px-6 py-3.5 text-sm font-bold text-gray-900 dark:bg-[#d4ff00] sm:mr-1 sm:rounded-full sm:py-3"
-                        >
-                            Next step
-                        </FlipMotionButton>
-                    </div>
-                    <FlipMotionButton
-                        type="button"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.95 }}
-                        onClick={() => router.push('/login')}
-                        className="mt-5 w-full text-center text-sm font-medium text-gray-500 transition-colors hover:text-gray-800 dark:text-white/50 dark:hover:text-white/80"
-                    >
-                        Already in?{' '}
-                        <span className="font-semibold text-brand-green dark:text-[#d4ff00]">Sign in</span>
-                    </FlipMotionButton>
+                    <HeroChatbot />
                 </motion.div>
             </div>
         </section>

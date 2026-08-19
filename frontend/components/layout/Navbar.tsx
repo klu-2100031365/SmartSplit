@@ -3,7 +3,7 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeftRight, Calculator as CalcIcon, Shield, Menu, X } from 'lucide-react';
+import { ArrowLeftRight, Bot, Calculator as CalcIcon, Shield, Menu, X } from 'lucide-react';
 import SmartSplitLogo from '../ui/SmartSplitLogo';
 import { FlipButton } from '../ui/Text3DFlip';
 import { AnimatedThemeToggler } from '../ui/animated-theme-toggler';
@@ -24,9 +24,11 @@ export type NavbarVariant = "fixed" | "heroInset" | "contained";
 
 type NavbarProps = {
     variant?: NavbarVariant;
+    showAssistantButton?: boolean;
+    onOpenAssistant?: () => void;
 };
 
-const Navbar = ({ variant = "fixed" }: NavbarProps) => {
+const Navbar = ({ variant = "fixed", showAssistantButton = false, onOpenAssistant }: NavbarProps) => {
     const isInset = variant === "heroInset";
     const isContained = variant === "contained";
     const { user, isAuthenticated } = useContext(AuthContext);
@@ -85,7 +87,7 @@ const Navbar = ({ variant = "fixed" }: NavbarProps) => {
     );
 
     const themeToggle = (
-        <motion.div className="flex scale-110 items-center justify-center">
+        <motion.div className="flex items-center justify-center">
             <AnimatedThemeToggler
                 isDark={theme === 'dark'}
                 onToggle={toggleTheme}
@@ -111,7 +113,7 @@ const Navbar = ({ variant = "fixed" }: NavbarProps) => {
             ? `${SITE_NAV_WIDTH} h-14 rounded-t-none rounded-b-xl border-t-0 px-5 shadow-sm sm:h-16 sm:rounded-b-2xl sm:px-7`
             : (isInset
                 ? 'relative mx-auto w-[min(82vw,26rem)] rounded-full border px-6 py-2.5 backdrop-blur-md sm:py-3'
-                : 'relative mx-auto max-w-[17.5rem] rounded-xl border px-2.5 py-2 backdrop-blur-xl sm:max-w-[22rem] sm:rounded-2xl sm:px-3.5 sm:py-2.5 dark:backdrop-blur-2xl'),
+                : 'relative mx-auto flex w-fit items-center gap-2 rounded-2xl border px-2.5 py-1.5 backdrop-blur-xl sm:gap-3 sm:px-3 sm:py-2 dark:backdrop-blur-2xl'),
         shellClass,
     ].join(' ');
 
@@ -119,13 +121,13 @@ const Navbar = ({ variant = "fixed" }: NavbarProps) => {
         ? `pointer-events-none fixed z-[100] w-full ${SITE_FRAME_INSET_TOP} ${SITE_FRAME_INSET_X}`
         : (isInset
             ? 'pointer-events-none fixed inset-x-0 top-4 z-[100] flex w-full justify-center px-4 sm:top-8'
-            : 'pointer-events-none fixed inset-x-0 top-3 z-[100] px-3 sm:top-4 sm:px-5');
+            : 'pointer-events-none fixed inset-x-0 top-0 z-[100] flex justify-center px-3 pt-2');
 
     const navInner = (
         <>
             {/* Left: calculator, converter */}
-            <div className="flex min-w-0 max-w-[42%] flex-1 items-center justify-start gap-1 sm:max-w-none sm:gap-1.5">
-                <div className="relative flex items-center overflow-visible rounded-lg border border-gray-200/60 bg-gray-50/90 p-1 dark:border-white/10 dark:bg-white/[0.06]">
+            <div className="flex shrink-0 items-center">
+                <div className="relative flex items-center overflow-visible rounded-lg border border-gray-200/60 bg-gray-50/90 p-0.5 dark:border-white/10 dark:bg-white/[0.06]">
                     {toolButtons}
                     <CalculatorModal isOpen={showCalc} onClose={() => setShowCalc(false)} />
                     <CurrencyConverterModal isOpen={showConv} onClose={() => setShowConv(false)} />
@@ -133,22 +135,33 @@ const Navbar = ({ variant = "fixed" }: NavbarProps) => {
             </div>
 
             {/* Center: logo + text */}
-            <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 justify-center">
+            <div className="flex shrink-0 items-center">
                 <button
                     type="button"
                     onClick={goHome}
-                    className="group flex items-center gap-1.5 sm:gap-2"
+                    className="group flex items-center gap-1.5"
                 >
-                    <SmartSplitLogo className="h-7 w-7 shrink-0 sm:h-8 sm:w-8" />
-                    <span className="font-mier text-sm font-semibold tracking-tight text-gray-900 dark:text-white sm:text-base">
+                    <SmartSplitLogo className="h-7 w-7 shrink-0" />
+                    <span className="font-mier text-sm font-semibold tracking-tight text-gray-900 dark:text-white">
                         SmartSplit
                     </span>
                 </button>
             </div>
 
             {/* Right: theme + sign in / account */}
-            <div className="flex min-w-0 max-w-[42%] flex-1 items-center justify-end gap-1 sm:max-w-none sm:gap-1.5">
+            <div className="flex shrink-0 items-center gap-0.5">
                 <div className="hidden items-center sm:flex">{themeToggle}</div>
+                {showAssistantButton && (
+                    <button
+                        type="button"
+                        onClick={onOpenAssistant}
+                        className={`${iconBtn} text-brand-green dark:text-[#d4ff00]`}
+                        title="Open assistant"
+                        aria-label="Open assistant"
+                    >
+                        <Bot size={18} className="shrink-0" />
+                    </button>
+                )}
                 {isAuthenticated && user ? (
                     <>
                         {user.isAdmin && (
