@@ -1,4 +1,5 @@
 import json
+import re
 import urllib.error
 import urllib.request
 
@@ -66,6 +67,14 @@ def _fallback_reply(message: str, ctx: dict) -> str:
     salary = ctx.get("monthly_salary")
     name = ctx.get("name") or "there"
 
+    if re.search(r"\b(add|invite|include|create|remove|delete)\b", lower) and re.search(
+        r"\b(people|members?|participants?|friends|persons?)\b", lower
+    ):
+        return (
+            "To add people, type: add people named Ada, Bob to TripName. "
+            "If you are already inside a trip, you can skip the trip name."
+        )
+
     if any(k in lower for k in ("sip", "invest", "mutual fund", "elss", "equity", "portfolio")):
         sip_amount = None
         if salary and isinstance(salary, (int, float)) and salary > 0:
@@ -97,7 +106,7 @@ def _fallback_reply(message: str, ctx: dict) -> str:
             "Update preferences on this profile page anytime."
         )
 
-    if any(k in lower for k in ("hello", "hi", "hey", "help")):
+    if re.search(r"\b(hello|hi|hey|help)\b", lower):
         return (
             f"Hi {name}! I'm your SmartSplit assistant. I can help with:\n"
             "• Your trips and expense splits (from your live data)\n"
@@ -119,10 +128,12 @@ def generate_chat_reply(
     ctx: dict,
     history: list[dict] | None = None,
 ) -> tuple[str, bool]:
-    system = f"""You are SmartSplit AI, a friendly financial assistant inside the SmartSplit expense app.
+    system = f"""You are SmartSplit AI, a helpful assistant inside the SmartSplit expense app.
+Follow the user's latest instruction. Do not greet or introduce yourself unless they said hi/hello.
+If they ask to add people, create a trip, or log an expense, give a short confirmation of what should happen — never a canned intro.
 Use ONLY the user data below when answering personal questions. If data is missing, say so clearly.
 Give practical SIP and mutual-fund guidance for India when asked, but include a brief disclaimer that this is educational, not licensed financial advice.
-Keep answers concise, structured with bullets when helpful, and warm in tone.
+Keep answers concise and specific.
 
 --- USER DATA ---
 {context_text}
