@@ -95,13 +95,14 @@ const HeroSection = () => {
                     transition={{ duration: 0.6 }}
                     className="mb-6 text-xs font-semibold uppercase tracking-[0.28em] text-gray-500 dark:text-white/45"
                 >
-                    Howdy — we are
+                    Not another split calculator
                 </motion.p>
 
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.92, y: 40 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.92, y: 40, rotateX: 16 }}
+                    animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
                     transition={{ duration: 1, type: 'spring', bounce: 0.38 }}
+                    style={{ perspective: 1200, transformStyle: 'preserve-3d' }}
                 >
                     <h1 className="font-mier text-[clamp(2.25rem,6vw,5.5rem)] font-semibold leading-[1.02] tracking-tight text-gray-900 dark:text-[#f2f2ed]">
                         <span className="block text-gray-900 dark:text-white/90">Split</span>
@@ -131,7 +132,7 @@ const HeroSection = () => {
                     transition={{ delay: 0.45, duration: 0.75 }}
                     className="mt-8 max-w-xl text-lg leading-relaxed text-gray-600 dark:text-white/55 sm:mt-10 sm:text-xl"
                 >
-                    Bill-splitting with motion-studio energy. Track, split, and settle without the spreadsheet.
+                    Typical split apps only divide a receipt. SmartSplit is a live ledger for trips, roommates, nights out, recurring bills — and your own daily spend.
                 </motion.p>
 
                 <motion.div
@@ -171,7 +172,7 @@ const HeroSection = () => {
                     className="mx-auto mt-14 max-w-xl sm:mt-16"
                 >
                     <p className="mb-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-white/40">
-                        Let&apos;s get to know each other
+                        Start your first shared ledger
                     </p>
                     <div className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-1.5 shadow-sm backdrop-blur-md dark:border-white/12 dark:bg-white/[0.04] sm:flex-row sm:items-center sm:rounded-full sm:pl-5">
                         <div className="flex min-h-[3rem] flex-1 items-center gap-3 px-4 sm:px-0">

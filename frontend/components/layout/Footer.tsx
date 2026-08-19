@@ -31,7 +31,7 @@ const Footer = () => {
                             <span className="font-mier text-xl font-semibold tracking-tight">SmartSplit</span>
                         </div>
                         <p className="text-sm leading-relaxed text-gray-600 dark:text-white/55 sm:text-base">
-                            The smartest way to split rent, trips, and everyday expenses — without spreadsheets or awkward follow-ups.
+                            Not a calculator with a group chat — a live ledger for trips, roommates, nights out, bills, and your own daily spend.
                         </p>
 
                         <FlipMotionButton
