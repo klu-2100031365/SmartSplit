@@ -58,7 +58,7 @@ const TripsList = () => {
 
     return (
         <ProtectedRoute>
-        <div className="p-4 sm:p-8 max-w-[1600px] mx-auto min-h-screen">
+        <div className="mx-auto min-h-screen max-w-[1600px] px-4 pb-8 pt-3 sm:px-8 sm:pb-10 sm:pt-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10">
                 <div>
                     <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white"> My Trips </h1>

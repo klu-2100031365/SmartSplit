@@ -62,7 +62,7 @@ const ActivitiesPlayPage = () => {
             <div className="relative min-h-screen">
                 <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-blue/10 via-white to-white dark:from-brand-blue/5 dark:via-gray-900 dark:to-gray-900" />
 
-                <div className="p-4 sm:p-8 max-w-[1200px] mx-auto min-h-screen pb-24">
+                <div className="mx-auto min-h-screen max-w-[1200px] px-4 pb-24 pt-3 sm:px-8 sm:pt-4">
                     <div className="flex items-center justify-between mb-8 gap-4">
                         <div className="flex items-center gap-4 min-w-0">
                             <button

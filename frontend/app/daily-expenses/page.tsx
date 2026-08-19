@@ -161,7 +161,7 @@ export default function DailyExpensesPage() {
 
     return (
         <ProtectedRoute>
-        <div className="p-4 sm:p-10 max-w-7xl mx-auto pb-32">
+        <div className="mx-auto max-w-7xl px-4 pb-32 pt-3 sm:px-10 sm:pt-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
                 <div>
                     <div className="flex items-center gap-3 mb-2">

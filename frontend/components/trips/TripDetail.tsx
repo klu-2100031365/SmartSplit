@@ -111,6 +111,26 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
 
     useEffect(refresh, [tripId]);
 
+    useEffect(() => {
+        const onChanged = (event: Event) => {
+            const id = (event as CustomEvent<{ id?: string }>).detail?.id;
+            if (!id || id === tripId) refresh();
+        };
+        window.addEventListener('ss-data-changed', onChanged);
+        return () => window.removeEventListener('ss-data-changed', onChanged);
+    }, [tripId]);
+
+    useEffect(() => {
+        const onTab = (event: Event) => {
+            const tab = (event as CustomEvent<{ tab?: string }>).detail?.tab;
+            if (tab === 'expenses' || tab === 'settlements' || tab === 'analytics') {
+                setActiveTab(tab);
+            }
+        };
+        window.addEventListener('ss-open-tab', onTab);
+        return () => window.removeEventListener('ss-open-tab', onTab);
+    }, []);
+
     if (!data) return <div className="min-h-screen flex items-center justify-center text-gray-500 dark:text-gray-400 text-lg"> Loading trip details...</div>;
 
     const { settlementData, dailyBalances, groupedExpenses, analyticsData, userShare } = data;
@@ -257,7 +277,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
 
 
     return (
-        <div className="p-4 sm:p-10 max-w-[1600px] mx-auto pb-32 min-h-screen" onClick={() => setActiveMenuId(null)}>
+        <div className="mx-auto min-h-screen max-w-[1600px] px-4 pb-32 pt-3 sm:px-10 sm:pt-4" onClick={() => setActiveMenuId(null)}>
             <div className="mb-12">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                     <div>
@@ -363,6 +383,7 @@ const TripDetail = ({ tripId, isSharedView = false }: { tripId: string, isShared
                     ['expenses', 'settlements', 'analytics'].map((tab) => (
                         <FlipButton
                             key={tab}
+                            data-ss-tab={tab}
                             onClick={() => setActiveTab(tab as 'expenses' | 'settlements' | 'analytics')}
                             className={`flex-1 md:flex-none px-6 md:px-10 py-2.5 rounded-xl font-mier font-bold text-sm transition-all shrink-0 ${activeTab === tab
                                 ? 'bg-brand-blue text-white shadow-md'
