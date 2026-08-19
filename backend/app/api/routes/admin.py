@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
 
 from app.api.deps import get_db
 from app.models import User as UserModel
@@ -8,7 +7,7 @@ from app.schemas.auth import User
 
 router = APIRouter(prefix="/admin")
 
-@router.get("/users", response_model=List[User])
+@router.get("/users", response_model=list[User])
 def list_users(db: Session = Depends(get_db)):
     # In a real app, we'd check if the current user is an admin here
     # For now, we return all users as requested
