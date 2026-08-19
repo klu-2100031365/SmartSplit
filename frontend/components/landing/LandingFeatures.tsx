@@ -10,50 +10,57 @@ import {
     Receipt,
     Share2,
 } from 'lucide-react';
-import { fadeUp, staggerContainer, viewportOnce } from '../../lib/motion';
+import { fadeUp, fadeUp3d, staggerContainer, viewportOnce } from '../../lib/motion';
+import TiltCard, { FloatIcon } from './TiltCard';
 
 const features = [
     {
         icon: Plane,
-        title: 'Trip expenses',
-        description: 'Create trips, invite friends, log who paid for flights, hotels, and meals — settlements calculated automatically.',
-        accent: 'from-sky-500/20 to-emerald-500/10',
-        span: 'lg:col-span-2',
+        kicker: 'Trips',
+        title: 'Trip ledgers, not a dump of receipts',
+        description:
+            'Each trip has its own space — flights, hotels, meals, multi-payer tabs, and live settlements. Typical split apps throw everything into one generic group.',
+        vs: 'One messy group for everything',
     },
     {
         icon: LayoutDashboard,
-        title: 'Dashboard overview',
-        description: 'See total spend, active trips, and pending settlements across every module in one glance.',
-        accent: 'from-violet-500/20 to-brand-blue/10',
-        span: '',
+        kicker: 'Overview',
+        title: 'One dashboard for every module',
+        description:
+            'See spend, active trips, and who still owes — across trips, bills, and nights out — instead of hunting through chats.',
+        vs: 'Buried in group-chat history',
     },
     {
         icon: Wallet,
-        title: 'Daily expenses',
-        description: 'Track personal spending day-to-day with categories and recurring items that stay in sync.',
-        accent: 'from-amber-500/15 to-orange-500/10',
-        span: '',
+        kicker: 'Personal',
+        title: 'Your daily spend, not only group IOUs',
+        description:
+            'Track your own money with categories and salary insights. Most splitters ignore the rest of your budget.',
+        vs: 'Shared bills only',
     },
     {
         icon: UtensilsCrossed,
-        title: 'Activities',
-        description: 'Dining, movies, and outings — each event gets its own log so group costs stay fair and transparent.',
-        accent: 'from-rose-500/15 to-pink-500/10',
-        span: '',
+        kicker: 'Nights out',
+        title: 'Dining, movies, and play — separately',
+        description:
+            'Nights out get their own event logs so a dinner does not pollute a trip ledger or a roommate bill.',
+        vs: 'Every outing in the same list',
     },
     {
         icon: Receipt,
-        title: 'Bills & subscriptions',
-        description: 'Rent, Wi‑Fi, streaming — track shared bills with autopay flags and split them across roommates.',
-        accent: 'from-teal-500/15 to-cyan-500/10',
-        span: '',
+        kicker: 'Roommates',
+        title: 'Recurring life: rent and subscriptions',
+        description:
+            'Shared bills with due dates, reminders, and roommate splits — built for monthly living, not one-off receipts.',
+        vs: 'No memory for rent day',
     },
     {
         icon: Share2,
-        title: 'Share & settle',
-        description: 'Generate share links, convert currencies, and use built-in calculators so nobody chases spreadsheets.',
-        accent: 'from-brand-green/25 to-brand-blue/10',
-        span: 'lg:col-span-2',
+        kicker: 'Settle',
+        title: 'Settle in the fewest payments',
+        description:
+            'Balances update the moment an expense changes. Share a summary, convert currencies, and close the books without chasing anyone.',
+        vs: 'A web of leftover IOUs',
     },
 ];
 
@@ -65,21 +72,20 @@ export default function LandingFeatures() {
         <section
             id="features"
             ref={ref}
-            className="relative border-t border-gray-200 bg-white px-4 py-24 transition-colors dark:border-white/10 dark:bg-[#050505] sm:px-8 sm:py-32"
+            className="relative overflow-hidden border-t border-gray-200 bg-[#f4f1ea] px-4 py-20 transition-colors dark:border-white/10 dark:bg-[#0b0b0b] sm:px-8 sm:py-28"
         >
             <m.div
-                className="pointer-events-none absolute inset-0 overflow-hidden"
-                initial={{ opacity: 0 }}
-                animate={inView ? { opacity: 1 } : {}}
-                transition={{ duration: 1 }}
-            >
-                <div className="absolute -right-32 top-20 h-72 w-72 rounded-full bg-brand-green/10 blur-[100px] dark:bg-[#d4ff00]/8" />
-                <m.div
-                    animate={{ y: [0, -18, 0] }}
-                    transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute -left-24 bottom-32 h-64 w-64 rounded-full bg-brand-blue/10 blur-[90px]"
-                />
-            </m.div>
+                aria-hidden
+                className="pointer-events-none absolute -left-16 top-24 h-56 w-56 rounded-full bg-brand-green/20 blur-[90px] dark:bg-[#d4ff00]/10"
+                animate={{ y: [0, 24, 0], scale: [1, 1.12, 1] }}
+                transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <m.div
+                aria-hidden
+                className="pointer-events-none absolute -right-10 bottom-10 h-64 w-64 rounded-full bg-sky-400/20 blur-[100px] dark:bg-sky-500/10"
+                animate={{ y: [0, -20, 0] }}
+                transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
+            />
 
             <m.div
                 className="relative mx-auto max-w-6xl"
@@ -87,53 +93,65 @@ export default function LandingFeatures() {
                 initial="hidden"
                 animate={inView ? 'visible' : 'hidden'}
             >
-                <m.p variants={fadeUp} custom={0} className="mb-4 text-xs font-semibold uppercase tracking-[0.25em] text-gray-500 dark:text-white/45">
+                <m.p variants={fadeUp} custom={0} className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-gray-500 dark:text-white/45">
                     What you get
                 </m.p>
                 <m.h2
                     variants={fadeUp}
                     custom={1}
-                    className="max-w-3xl font-mier text-4xl font-semibold leading-[1.08] tracking-tight text-gray-900 dark:text-[#f2f2ed] sm:text-5xl md:text-6xl"
+                    className="max-w-3xl font-mier text-[2rem] font-semibold leading-[1.08] tracking-tight text-gray-900 dark:text-[#f2f2ed] sm:text-5xl md:text-6xl"
                 >
-                    Everything your group needs —{' '}
-                    <span className="text-gray-500 dark:text-white/50">built in.</span>
+                    A living ledger —{' '}
+                    <span className="text-brand-green dark:text-[#d4ff00]">not a calculator.</span>
                 </m.h2>
                 <m.p
                     variants={fadeUp}
                     custom={2}
-                    className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-white/55 sm:text-xl"
+                    className="mt-5 max-w-2xl text-base leading-relaxed text-gray-600 dark:text-white/55 sm:text-xl"
                 >
-                    SmartSplit isn&apos;t just a calculator. It&apos;s trips, roommates, nights out, bills, and daily spend — connected in one ledger.
+                    Typical money-splitting apps stop at “who paid last night.” SmartSplit gives trips, roommates, nights out, recurring bills, and your own daily spend their own place — then settles who owes whom automatically.
                 </m.p>
 
-                <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-12 flex flex-col gap-5 sm:mt-16 sm:grid sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
                     {features.map((feature, i) => (
                         <m.div
                             key={feature.title}
-                            variants={fadeUp}
-                            custom={3 + i}
-                            whileHover={{ y: -6, transition: { duration: 0.25 } }}
-                            className={feature.span}
+                            variants={fadeUp3d}
+                            custom={i}
+                            className={`[perspective:1100px] ${i % 2 === 1 ? 'sm:mt-8' : ''}`}
                         >
-                            <article
-                                className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 p-8 dark:border-white/10 dark:bg-white/[0.03] sm:rounded-3xl sm:p-10`}
-                            >
-                                <m.div
-                                    className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${feature.accent} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
-                                />
-                                <div className="relative">
-                                    <feature.icon
-                                        className="mb-6 h-8 w-8 text-brand-green dark:text-[#d4ff00]"
-                                        strokeWidth={1.25}
-                                    />
-                                    <h3 className="font-mier text-xl font-semibold text-gray-900 dark:text-[#f2f2ed] sm:text-2xl">
+                            <TiltCard className="h-full" index={i}>
+                                <article
+                                    className="relative flex h-full flex-col rounded-[1.75rem] border border-black/10 bg-white p-6 shadow-[0_14px_0_0_rgba(15,23,42,0.08),0_30px_48px_-28px_rgba(0,0,0,0.4)] dark:border-white/10 dark:bg-[#141414] dark:shadow-[0_14px_0_0_rgba(212,255,0,0.12),0_30px_48px_-28px_rgba(0,0,0,0.85)] sm:rounded-[2rem] sm:p-8"
+                                    style={{ transformStyle: 'preserve-3d' }}
+                                >
+                                    <div className="flex items-start justify-between gap-4" style={{ transform: 'translateZ(26px)' }}>
+                                        <FloatIcon icon={feature.icon} index={i} />
+                                        <span className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-white/45">
+                                            {feature.kicker}
+                                        </span>
+                                    </div>
+                                    <h3
+                                        className="mt-6 font-mier text-xl font-semibold leading-snug text-gray-900 dark:text-[#f2f2ed] sm:text-2xl"
+                                        style={{ transform: 'translateZ(20px)' }}
+                                    >
                                         {feature.title}
                                     </h3>
-                                    <p className="mt-3 text-sm leading-relaxed text-gray-600 dark:text-white/50 sm:text-base">
+                                    <p
+                                        className="mt-3 flex-1 text-sm leading-relaxed text-gray-600 dark:text-white/50 sm:text-base"
+                                        style={{ transform: 'translateZ(16px)' }}
+                                    >
                                         {feature.description}
                                     </p>
-                                </div>
-                            </article>
+                                    <p
+                                        className="mt-5 border-t border-dashed border-gray-200 pt-4 text-xs font-medium text-gray-500 dark:border-white/10 dark:text-white/40"
+                                        style={{ transform: 'translateZ(12px)' }}
+                                    >
+                                        Typical apps:{' '}
+                                        <span className="text-gray-800 dark:text-white/70">{feature.vs}</span>
+                                    </p>
+                                </article>
+                            </TiltCard>
                         </m.div>
                     ))}
                 </div>
