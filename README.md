@@ -600,6 +600,8 @@ This repo is public. Treat the following as mandatory for any deployment:
 | Daily expense sync from modules | Returns `count: 0` |
 | Admin API authorization | No server-side admin guard |
 
+#Goal
+The main goal of SmartSplit is to provide a simple and reliable solution for managing both shared and personal finances without relying on manual calculations. Whether it is splitting a restaurant bill, managing expenses during a trip, or tracking everyday spending, SmartSplit brings these workflows together in a single application.
 
 
 ---
